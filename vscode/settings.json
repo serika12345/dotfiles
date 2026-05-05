@@ -1,0 +1,159 @@
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnType": true
+    },
+    "editor.accessibilitySupport": "off",
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "editor.formatOnSave": true,
+    "editor.renderWhitespace": "all",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "git.autofetch": true,
+    "git.enableSmartCommit": true,
+    "security.workspace.trust.untrustedFiles": "open",
+    "terminal.integrated.commandsToSkipShell": ["language-julia.interrupt"],
+    "trailing-spaces.trimOnSave": true,
+    "workbench.iconTheme": "vscode-icons",
+    "vsicons.dontShowNewVersionMessage": true,
+    "playwright.reuseBrowser": false,
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "eslint.codeActionsOnSave.rules": null,
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "prettier.printWidth": 130,
+    "prettier.tabWidth": 4,
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[dart]": {
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "editor.rulers": [80],
+        "editor.selectionHighlight": false,
+        "editor.suggestSelection": "first",
+        "editor.tabCompletion": "onlySnippets",
+        "editor.wordBasedSuggestions": "off"
+    },
+    "editor.guides.bracketPairs": true,
+    "files.trimFinalNewlines": true,
+    "markdownlint.config": {},
+    "window.openFilesInNewWindow": "default",
+    "editor.unicodeHighlight.includeComments": true,
+    "git.openRepositoryInParentFolders": "never",
+    "workbench.editorAssociations": {
+        "*.pdf": "pdf.preview"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "vim.useSystemClipboard": true,
+    "vim.visualModeKeyBindingsNonRecursive": [],
+    "vim.autoSwitchInputMethod.enable": true,
+    "vim.autoSwitchInputMethod.defaultIM": "com.apple.inputmethod.Kotoeri.RomajiTyping.Roman",
+    "vim.autoSwitchInputMethod.obtainIMCmd": "/opt/homebrew/bin/im-select",
+    "vim.autoSwitchInputMethod.switchIMCmd": "/opt/homebrew/bin/im-select {im}",
+    "vim.handleKeys": {
+        //以下はVimのショートカットを利用
+        "<C-d>": true, //下方向へのカーソル移動 ※上方向へのカーソル移動(Ctrl+u)はデフォルト設定でも動作
+        //以下はVimではなく、Windows側のショートカット
+        "<C-c>": false, //コピー
+        "<C-v>": false, //貼り付け ※VisualBlockモードはCtrl＋Qで行う
+        "<C-x>": false, //切り取り
+        "<C-f>": false, //検索
+        "<C-a>": false, //全選択
+        "<C-p>": false //ファイル検索
+    },
+    "vim.normalModeKeyBindingsNonRecursive": [
+        {
+            "before": ["d"],
+            "after": ["\"", "_", "d"]
+        },
+        {
+            "before": ["c"],
+            "after": ["\"", "_", "c"]
+        },
+        {
+            "before": ["x"],
+            "after": ["\"", "_", "x"]
+        }
+    ],
+    "emmet.variables": {
+        "lang": "ja"
+    },
+    "liveServer.settings.donotShowInfoMsg": true,
+    "liveServer.settings.CustomBrowser": "firefox",
+    "editor.fontSize": 14,
+    "dart.lineLength": 120,
+    "explorer.confirmDelete": false,
+    "redhat.telemetry.enabled": true,
+    "vim.commandLineModeKeyBindings": [],
+    "vim.digraphs": {},
+    "git.confirmSync": false,
+    "[markdown]": {
+        "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+    },
+    "debug.javascript.autoAttachFilter": "onlyWithFlag",
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "[sql]": {
+        "editor.defaultFormatter": "inferrinizzard.prettier-sql-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "debug.javascript.defaultRuntimeExecutable": {
+        "pwa-node": "node"
+    },
+    "artisan.docker.enabled": true,
+    "artisan.docker.command": "docker compose exec app",
+    "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+    "[php]": {
+        "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
+    },
+    "diffEditor.ignoreTrimWhitespace": true,
+    "eslint.useFlatConfig": true,
+    "workbench.editor.enablePreview": false,
+    "explorer.compactFolders": false,
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "typescript.inlayHints.enumMemberValues.enabled": true,
+    "files.associations": {
+        "*.asm": "asm6502"
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    },
+    "liveServer.settings.AdvanceCustomBrowserCmdLine": "",
+    "chat.instructionsFilesLocations": {
+        ".github/instructions": true,
+        "/tmp/postman-collections-post-response.instructions.md": true,
+        "/tmp/postman-collections-pre-request.instructions.md": true,
+        "/tmp/postman-folder-post-response.instructions.md": true,
+        "/tmp/postman-folder-pre-request.instructions.md": true,
+        "/tmp/postman-http-request-post-response.instructions.md": true,
+        "/tmp/postman-http-request-pre-request.instructions.md": true
+    },
+    "javascript.preferences.importModuleSpecifier": "relative",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "nim.nimprettyIndent": 4,
+    "nim.formatOnSave": true,
+    "[nim]": {
+        "editor.defaultFormatter": "NimLang.nimlang"
+    },
+    "cmake.useCMakePresets": "always",
+    "cmake.allowCommentsInPresetsFile": true,
+    "gitlens.ai.model": "vscode",
+    "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.checkUpdates": true,
+    "http.systemCertificatesNode": true,
+    "chatgpt.composerEnterBehavior": "cmdIfMultiline"
+}

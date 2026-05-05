@@ -1,0 +1,211 @@
+{
+  config,
+  lib,
+  pkgs,
+  self,
+  ...
+}:
+
+{
+  nixpkgs.config.allowUnfree = true;
+  nixpkgs.overlays = [
+    (final: prev: {
+      xjadeo =
+        if prev.stdenv.hostPlatform.isDarwin then
+          final.callPackage "${self}/pkgs/xjadeo/package.nix" { }
+        else
+          prev.xjadeo;
+    })
+  ];
+
+  environment.systemPackages = with pkgs; [
+    # コーディングエージェント向け
+    ripgrep
+    fd
+    fzf
+    bat
+    # 一般
+    ncdu
+    duti
+    gh
+    tmux
+    ffmpeg
+    direnv
+    nixfmt
+    gemini-cli
+    docker
+    colima
+    tree
+    xjadeo
+    codex
+    furnace
+  ];
+
+  # Necessary for using flakes on this system.
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
+
+  # Set Git commit hash for darwin-version.
+  system.configurationRevision = self.rev or self.dirtyRev or null;
+
+  # Used for backwards compatibility, please read the changelog before changing.
+  # $ darwin-rebuild changelog
+  system.stateVersion = 6;
+
+  # The platform the configuration will be used on.
+  nixpkgs.hostPlatform = "aarch64-darwin";
+
+  # from below, my personal preferences.
+  users.users.masato = {
+    name = "masato";
+    home = "/Users/masato";
+  };
+  system.primaryUser = "masato";
+
+  # Environment variables
+  environment.variables = {
+    SSH_AUTH_SOCK = "/Users/masato/.bitwarden-ssh-agent.sock";
+  };
+
+  # Environment variables for GUI apps / launchd user processes
+  launchd.user.envVariables = {
+    SSH_AUTH_SOCK = "/Users/masato/.bitwarden-ssh-agent.sock";
+  };
+
+  # -- Begin Finder settings --
+  # Show all filename extensions in Finder.
+  system.defaults.finder.AppleShowAllExtensions = true;
+  # Show hidden files in Finder.
+  system.defaults.finder.AppleShowAllFiles = true;
+  # Show path bar in Finder.
+  system.defaults.finder.ShowPathbar = true;
+  # -- End of Finder settings --
+
+  # Keyboard
+  # Use F1, F2, etc. keys as standard function keys.
+  system.defaults.NSGlobalDomain."com.apple.keyboard.fnState" = true;
+  # Set key repeat rate.
+  system.defaults.NSGlobalDomain.KeyRepeat = 2;
+  # Set delay until key repeat.
+  system.defaults.NSGlobalDomain.InitialKeyRepeat = 25;
+
+  # Enable key mapping.
+  system.keyboard.enableKeyMapping = true;
+  # remap caps lock to control
+  system.keyboard.remapCapsLockToControl = true;
+
+  # UI / System Defaults
+  # Set dark mode.
+  system.defaults.NSGlobalDomain.AppleInterfaceStyle = "Dark";
+
+  # Set dock to autohide.
+  system.defaults.dock.autohide = true;
+  # Disable showing recent applications in dock.
+  system.defaults.dock.show-recents = false;
+
+  # Show battery percentage in menu bar.
+  system.defaults.controlcenter.BatteryShowPercentage = true;
+
+  # Enable three finger drag on trackpad.
+  system.defaults.trackpad.TrackpadThreeFingerDrag = true;
+  # Enable three finger tap for Look up / Dictionary.
+  system.defaults.trackpad.TrackpadThreeFingerTapGesture = 2;
+
+  # hide widgets in desktop
+  system.defaults.WindowManager.StandardHideWidgets = true;
+
+  # disable click wallpaper to show desktop
+  system.defaults.WindowManager.EnableStandardClickToShowDesktop = false;
+
+  # persistent
+  system.defaults.dock.persistent-apps = [
+    {
+      app = "/System/Applications/Apps.app";
+    }
+    {
+      app = "/System/Applications/Mail.app";
+    }
+    {
+      app = "/Applications/Safari.app";
+    }
+    {
+      app = "/Applications/Visual Studio Code.app";
+    }
+    {
+      app = "/Applications/Firefox.app";
+    }
+    {
+      app = "/Applications/Xcode.app";
+    }
+    {
+      app = "/System/Applications/Utilities/Terminal.app";
+    }
+    {
+      app = "/System/Applications/System Settings.app";
+    }
+  ];
+
+  # Homebrew
+  # enable homebrew
+  homebrew.enable = true;
+
+  homebrew.taps = [
+    "daipeihust/tap"
+  ];
+
+  homebrew.brews = [
+    "daipeihust/tap/im-select"
+  ];
+
+  homebrew.casks = [
+    "visual-studio-code"
+    "firefox"
+    "google-chrome"
+    "utm"
+    "bitwarden"
+    "linearmouse"
+    "karabiner-elements"
+    "adguard"
+    "affinity"
+    "google-japanese-ime"
+    "bartender"
+    "hex-fiend"
+    "onyx"
+    "blender"
+    "hopper-disassembler"
+    "mission-control-plus"
+    "hhkb"
+    "elgato-game-capture-hd"
+    "android-studio"
+    "nx-studio"
+    "codex-app"
+    "balenaetcher"
+    "windows-app"
+    "rustdesk"
+  ];
+
+  # App Store apps
+  homebrew.masApps = {
+    "LINE" = 539883307;
+    "Bandwidth+" = 490461369;
+    "SSTP Connect" = 1543667909;
+    "Xcode" = 497799835;
+  };
+
+  # Automatically update and upgrade Homebrew packages on activation.
+  homebrew.onActivation.autoUpdate = true;
+  homebrew.onActivation.upgrade = true;
+  homebrew.onActivation.cleanup = "zap";
+
+  system.activationScripts.postActivation.text = lib.mkAfter ''
+    target="/Applications/Jadeo.app"
+    source="/Applications/Nix Apps/Jadeo.app"
+
+    if [ -e "$source" ]; then
+      rm -rf "$target"
+      ln -s "$source" "$target"
+    fi
+  '';
+}

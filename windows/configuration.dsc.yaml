@@ -1,0 +1,108 @@
+# Created using winget configure export 1.28.220
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.3
+$schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
+metadata:
+  winget:
+    processor:
+      identifier: "dscv3"
+
+resources:
+- name: winget_Git.Git
+  type: Microsoft.WinGet/Package
+  metadata:
+    description: "Git.Git のインストール"
+  properties:
+    id: "Git.Git"
+    source: "winget"
+
+- name: winget_Mozilla.Firefox
+  type: Microsoft.WinGet/Package
+  metadata:
+    description: "Mozilla.Firefox のインストール"
+  properties:
+    id: "Mozilla.Firefox"
+    source: "winget"
+
+- name: winget_Microsoft.PowerShell
+  type: Microsoft.WinGet/Package
+  metadata:
+    description: "Microsoft.PowerShell のインストール"
+  properties:
+    id: "Microsoft.PowerShell"
+    source: "winget"
+
+- name: winget_GitHub.cli
+  type: Microsoft.WinGet/Package
+  metadata:
+    description: "GitHub.cli のインストール"
+  properties:
+    id: "GitHub.cli"
+    source: "winget"
+
+- name: winget_Microsoft.VisualStudioCode
+  type: Microsoft.WinGet/Package
+  metadata:
+    description: "Microsoft.VisualStudioCode のインストール"
+  properties:
+    id: "Microsoft.VisualStudioCode"
+    source: "winget"
+
+- name: winget_Canonical.Ubuntu
+  type: Microsoft.WinGet/Package
+  metadata:
+    description: "Canonical.Ubuntu のインストール"
+  properties:
+    id: "Canonical.Ubuntu"
+    source: "winget"
+
+- name: winget_Microsoft.WindowsTerminal
+  type: Microsoft.WinGet/Package
+  metadata:
+    description: "Microsoft.WindowsTerminal のインストール"
+  properties:
+    id: "Microsoft.WindowsTerminal"
+    source: "winget"
+
+- name: winget_Microsoft.WSL
+  type: Microsoft.WinGet/Package
+  metadata:
+    description: "Microsoft.WSL のインストール"
+  properties:
+    id: "Microsoft.WSL"
+    source: "winget"
+
+- name: git_global_identity
+  type: Microsoft.DSC/PowerShell
+  metadata:
+    description: "Git のグローバル user.name / user.email を設定"
+  properties:
+    resources:
+      - name: git_user_name
+        type: PSDscResources/Script
+        properties:
+          DependsOn:
+            - "[Microsoft.WinGet/Package]winget_Git.Git"
+          GetScript: |
+            $value = git config --global --get user.name 2>$null
+            return @{ Result = $value }
+          TestScript: |
+            $expected = "serika12345"
+            $current = git config --global --get user.name 2>$null
+            return $current -eq $expected
+          SetScript: |
+            git config --global user.name "serika12345"
+
+      - name: git_user_email
+        type: PSDscResources/Script
+        properties:
+          DependsOn:
+            - "[Microsoft.WinGet/Package]winget_Git.Git"
+          GetScript: |
+            $value = git config --global --get user.email 2>$null
+            return @{ Result = $value }
+          TestScript: |
+            $expected = "281916063+serika12345@users.noreply.github.com"
+            $current = git config --global --get user.email 2>$null
+            return $current -eq $expected
+          SetScript: |
+            git config --global user.email "281916063+serika12345@users.noreply.github.com"
