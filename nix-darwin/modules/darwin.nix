@@ -37,7 +37,6 @@
     colima
     tree
     xjadeo
-    codex
     furnace
   ];
 
@@ -180,6 +179,7 @@
     "elgato-game-capture-hd"
     "android-studio"
     "nx-studio"
+    "codex"
     "codex-app"
     "balenaetcher"
     "windows-app"
