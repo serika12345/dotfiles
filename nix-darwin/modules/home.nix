@@ -16,9 +16,6 @@
         "--foreground"
       ];
       RunAtLoad = true;
-      KeepAlive = {
-        SuccessfulExit = false;
-      };
       StandardOutPath = "${config.home.homeDirectory}/Library/Logs/colima.out.log";
       StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/colima.err.log";
       EnvironmentVariables = {
