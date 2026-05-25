@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 let
   desktopModule = ./desktop/gnome.nix;
+  bitwardenSshAgentSocket = "/home/masato/.bitwarden-ssh-agent.sock";
 in
 {
   imports = [
@@ -67,6 +68,9 @@ in
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
     ];
   };
+
+  # Bitwarden Desktop exposes its SSH agent at this socket on Linux.
+  environment.sessionVariables.SSH_AUTH_SOCK = bitwardenSshAgentSocket;
 
   # Enable OpenGL
   hardware.graphics.enable = true;
@@ -279,6 +283,11 @@ in
 
   # vscodeで必要 https://wiki.nixos.org/wiki/Visual_Studio_Code
   programs.nix-ld.enable = true;
+
+  programs.ssh.extraConfig = ''
+    Host *
+      IdentityAgent ${bitwardenSshAgentSocket}
+  '';
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
