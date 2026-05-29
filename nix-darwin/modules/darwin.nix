@@ -32,7 +32,6 @@
     ffmpeg
     direnv
     nixfmt
-    gemini-cli
     docker
     colima
     tree
@@ -127,19 +126,19 @@
       app = "/System/Applications/Mail.app";
     }
     {
-      app = "/Applications/Safari.app";
+      app = "/Applications/Firefox.app";
     }
     {
       app = "/Applications/Visual Studio Code.app";
     }
     {
-      app = "/Applications/Firefox.app";
-    }
-    {
-      app = "/Applications/Xcode.app";
+      app = "/Applications/Codex.app";
     }
     {
       app = "/System/Applications/Utilities/Terminal.app";
+    }
+    {
+      app = "/Applications/Bitwarden.app";
     }
     {
       app = "/System/Applications/System Settings.app";
@@ -183,7 +182,6 @@
     "codex-app"
     "balenaetcher"
     "windows-app"
-    "rustdesk"
   ];
 
   # App Store apps
