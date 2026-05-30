@@ -200,17 +200,9 @@ in
 
   # JISキーボード及び日本語IMEを使用するための設定
   home-manager.users.masato =
-    { config, pkgs, ... }:
+    { ... }:
     {
       home.stateVersion = "25.11";
-      home.packages = with pkgs; [
-        wineWow64Packages.stableFull
-        winetricks
-      ];
-
-      home.sessionVariables = {
-        WINEPREFIX = "${config.home.homeDirectory}/.wine64";
-      };
 
       programs.bash.enable = true;
 
