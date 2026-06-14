@@ -164,6 +164,17 @@
     "daipeihust/tap/im-select"
   ];
 
+  system.activationScripts.homebrew.text = lib.mkBefore ''
+    if [ -f "${config.homebrew.prefix}/bin/brew" ]; then
+      PATH="${config.homebrew.prefix}/bin:$PATH" \
+      sudo \
+        --preserve-env=PATH \
+        --user=${lib.escapeShellArg config.homebrew.user} \
+        --set-home \
+        brew trust --quiet --tap daipeihust/tap
+    fi
+  '';
+
   homebrew.casks = [
     "visual-studio-code"
     "firefox"
