@@ -300,6 +300,35 @@ in
     KbdInteractiveAuthentication = false;
   };
 
+  # Enable Samba file sharing on the local network.
+  services.samba = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      global = {
+        "server string" = "nixos";
+        "workgroup" = "WORKGROUP";
+        "security" = "user";
+        "map to guest" = "Bad User";
+      };
+
+      masato = {
+        "path" = "/home/masato";
+        "browseable" = "yes";
+        "read only" = "no";
+        "valid users" = "masato";
+        "create mask" = "0664";
+        "directory mask" = "0775";
+      };
+    };
+  };
+
+  # Makes the Samba server discoverable from modern Windows clients.
+  services.samba-wsdd = {
+    enable = true;
+    openFirewall = true;
+  };
+
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [ 7860 ];
   # networking.firewall.allowedUDPPorts = [ ... ];
