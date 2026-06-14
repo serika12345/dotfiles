@@ -72,6 +72,13 @@
     SSH_AUTH_SOCK = "/Users/masato/.bitwarden-ssh-agent.sock";
   };
 
+  # SMB client settings for connections from macOS to SMB servers.
+  environment.etc."nsmb.conf".text = ''
+    [default]
+    protocol_vers_map=4
+    signing_required=no
+  '';
+
   # -- Begin Finder settings --
   # Show all filename extensions in Finder.
   system.defaults.finder.AppleShowAllExtensions = true;
