@@ -37,6 +37,7 @@
     tree
     xjadeo
     furnace
+    ghidra
   ];
 
   # Necessary for using flakes on this system.
