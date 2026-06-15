@@ -15,6 +15,25 @@
           final.callPackage "${self}/pkgs/xjadeo/package.nix" { }
         else
           prev.xjadeo;
+      ghidra =
+        if prev.stdenv.hostPlatform.isDarwin then
+          final.symlinkJoin {
+            name = prev.ghidra.name;
+            paths = [ prev.ghidra ];
+            postBuild = lib.concatLines [
+              "# nixpkgs' Darwin app launcher expects support/ inside the .app,"
+              "# but Ghidra keeps the actual runtime tree under lib/ghidra."
+              "rm -rf \"$out/Applications/Ghidra.app\""
+              "mkdir -p \"$out/Applications/Ghidra.app/Contents/MacOS\""
+              "ln -s \"${prev.ghidra}/Applications/Ghidra.app/Contents/Resources\" \"$out/Applications/Ghidra.app/Contents/Resources\""
+              "ln -s \"${prev.ghidra}/Applications/Ghidra.app/Contents/Info.plist\" \"$out/Applications/Ghidra.app/Contents/Info.plist\""
+              "printf '%s\\n' '#!${final.runtimeShell}' 'exec \"${prev.ghidra}/lib/ghidra/ghidraRun\" \"$@\"' > \"$out/Applications/Ghidra.app/Contents/MacOS/Ghidra\""
+              "chmod +x \"$out/Applications/Ghidra.app/Contents/MacOS/Ghidra\""
+            ];
+            meta = prev.ghidra.meta;
+          }
+        else
+          prev.ghidra;
     })
   ];
 
