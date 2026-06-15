@@ -220,6 +220,8 @@
     "codex-app"
     "balenaetcher"
     "windows-app"
+    "wireshark-app"
+    "lulu"
   ];
 
   # App Store apps
