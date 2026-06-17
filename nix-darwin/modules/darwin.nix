@@ -47,6 +47,7 @@
     ncdu
     duti
     gh
+    glab
     tmux
     ffmpeg
     direnv
