@@ -198,7 +198,7 @@
   homebrew.casks = [
     "visual-studio-code"
     "firefox"
-    "google-chrome"
+    "ungoogled-chromium"
     "utm"
     "bitwarden"
     "linearmouse"
