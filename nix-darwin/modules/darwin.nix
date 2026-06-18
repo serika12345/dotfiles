@@ -207,7 +207,6 @@
     "adguard"
     "affinity"
     "google-japanese-ime"
-    "bartender"
     "hex-fiend"
     "onyx"
     "blender"
@@ -223,6 +222,8 @@
     "windows-app"
     "wireshark-app"
     "lulu"
+    "little-snitch"
+    "thaw"
   ];
 
   # App Store apps
