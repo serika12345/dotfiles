@@ -222,7 +222,6 @@
     "windows-app"
     "wireshark-app"
     "lulu"
-    "little-snitch"
     "thaw"
   ];
 
