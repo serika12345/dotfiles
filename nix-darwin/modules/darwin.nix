@@ -183,6 +183,7 @@
 
   homebrew.brews = [
     "daipeihust/tap/im-select"
+    "firefoxpwa"
   ];
 
   system.activationScripts.homebrew.text = lib.mkBefore ''
@@ -245,6 +246,35 @@
     if [ -e "$source" ]; then
       rm -rf "$target"
       ln -s "$source" "$target"
+    fi
+
+    firefoxpwaManifestSource="${config.homebrew.prefix}/opt/firefoxpwa/share/firefoxpwa.json"
+    firefoxpwaManifestTargetDir="/Library/Application Support/Mozilla/NativeMessagingHosts"
+    firefoxpwaManifestTarget="$firefoxpwaManifestTargetDir/firefoxpwa.json"
+
+    if [ -e "$firefoxpwaManifestSource" ]; then
+      mkdir -p "$firefoxpwaManifestTargetDir"
+      ln -sfn "$firefoxpwaManifestSource" "$firefoxpwaManifestTarget"
+    fi
+
+    firefoxPoliciesDir="/Applications/Firefox.app/Contents/Resources/distribution"
+
+    if [ -d "/Applications/Firefox.app" ]; then
+      mkdir -p "$firefoxPoliciesDir"
+      install -m 0644 ${
+        pkgs.writeText "firefox-policies.json" (
+          builtins.toJSON {
+            policies = {
+              ExtensionSettings = {
+                "firefoxpwa@filips.si" = {
+                  installation_mode = "normal_installed";
+                  install_url = "https://addons.mozilla.org/firefox/downloads/latest/pwas-for-firefox/latest.xpi";
+                };
+              };
+            };
+          }
+        )
+      } "$firefoxPoliciesDir/policies.json"
     fi
   '';
 }
