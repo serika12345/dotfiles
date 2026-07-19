@@ -235,7 +235,6 @@
     "Bandwidth+" = 490461369;
     "SSTP Connect" = 1543667909;
     "Xcode" = 497799835;
-    "Proton Authenticator" = 6741758667;
   };
 
   # Automatically update and upgrade Homebrew packages on activation.
