@@ -169,7 +169,7 @@
       app = "/Applications/Bitwarden.app";
     }
     {
-      app = "/Applications/Proton Authenticator.app"
+      app = "/Applications/Proton Authenticator.app";
     }
     {
       app = "/System/Applications/System Settings.app";
