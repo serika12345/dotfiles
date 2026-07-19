@@ -160,13 +160,16 @@
       app = "/Applications/Visual Studio Code.app";
     }
     {
-      app = "/Applications/Codex.app";
+      app = "/Applications/ChatGPT.app";
     }
     {
       app = "/System/Applications/Utilities/Terminal.app";
     }
     {
       app = "/Applications/Bitwarden.app";
+    }
+    {
+      app = "/Applications/Proton Authenticator.app"
     }
     {
       app = "/System/Applications/System Settings.app";
@@ -217,13 +220,13 @@
     "elgato-game-capture-hd"
     "android-studio"
     "nx-studio"
-    "codex"
-    "codex-app"
+    "chatgpt"
     "balenaetcher"
     "windows-app"
     "wireshark-app"
-    "lulu"
     "thaw"
+    "proton-drive"
+    "protonvpn"
   ];
 
   # App Store apps
@@ -232,6 +235,7 @@
     "Bandwidth+" = 490461369;
     "SSTP Connect" = 1543667909;
     "Xcode" = 497799835;
+    "Proton Authenticator" = 6741758667;
   };
 
   # Automatically update and upgrade Homebrew packages on activation.
