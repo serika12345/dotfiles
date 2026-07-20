@@ -227,6 +227,7 @@
     "thaw"
     "proton-drive"
     "protonvpn"
+    "raspberry-pi-imager"
   ];
 
   # App Store apps
