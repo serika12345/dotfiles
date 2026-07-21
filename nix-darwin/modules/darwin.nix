@@ -228,6 +228,7 @@
     "proton-drive"
     "protonvpn"
     "raspberry-pi-imager"
+    "fujitsu-scansnap-home"
   ];
 
   # App Store apps
