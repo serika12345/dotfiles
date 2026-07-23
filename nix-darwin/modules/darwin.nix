@@ -229,6 +229,7 @@
     "protonvpn"
     "raspberry-pi-imager"
     "fujitsu-scansnap-home"
+    "krita"
   ];
 
   # App Store apps
