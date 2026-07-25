@@ -4,7 +4,7 @@
 }:
 
 let
-  bitwardenSshAgentSocket = "/home/masato/.bitwarden-ssh-agent.sock";
+  bitwardenSshAgentSocket = "/home/masato/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock";
 in
 {
   imports = [
@@ -61,13 +61,9 @@ in
     "nix-command"
     "flakes"
   ];
-  nixpkgs.config = {
-    allowUnfree = true;
-    # Bitwarden Desktop currently depends on this Electron release.
-    permittedInsecurePackages = [ "electron-39.8.10" ];
-  };
+  nixpkgs.config.allowUnfree = true;
 
-  # Bitwarden Desktop exposes its SSH agent at this socket on Linux.
+  # The Flatpak build exposes its SSH agent at this socket.
   environment.sessionVariables.SSH_AUTH_SOCK = bitwardenSshAgentSocket;
 
   services.displayManager.autoLogin.enable = false;
@@ -100,8 +96,14 @@ in
   home-manager.users.masato = {
     home.stateVersion = "26.05";
 
-    xdg.configFile."autostart/bitwarden.desktop".source =
-      "${pkgs.bitwarden-desktop}/share/applications/bitwarden.desktop";
+    xdg.configFile."autostart/bitwarden.desktop".text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=Bitwarden
+      Exec=${pkgs.flatpak}/bin/flatpak run com.bitwarden.desktop
+      X-GNOME-Autostart-enabled=true
+      NoDisplay=true
+    '';
 
     programs.bash.enable = true;
     programs.git = {
@@ -131,6 +133,7 @@ in
   };
 
   virtualisation.docker.enable = true;
+  services.flatpak.enable = true;
   programs.appimage = {
     enable = true;
     binfmt = true;
@@ -151,7 +154,6 @@ in
   environment.systemPackages = with pkgs; [
     appimage-run
     bat
-    bitwarden-desktop
     codex
     direnv
     fd
