@@ -106,15 +106,6 @@ in
   home-manager.users.masato = {
     home.stateVersion = "26.05";
 
-    xdg.configFile."autostart/bitwarden.desktop".text = ''
-      [Desktop Entry]
-      Type=Application
-      Name=Bitwarden
-      Exec=${pkgs.flatpak}/bin/flatpak run com.bitwarden.desktop
-      X-GNOME-Autostart-enabled=true
-      NoDisplay=true
-    '';
-
     programs.bash.enable = true;
     programs.git = {
       enable = true;
@@ -145,6 +136,8 @@ in
   virtualisation.docker.enable = true;
   services.flatpak = {
     enable = true;
+    # Bitwarden creates its own XDG Portal autostart entry when "Start
+    # automatically on login" is enabled in the app.
     packages = [ "com.bitwarden.desktop" ];
     update.onActivation = true;
   };
