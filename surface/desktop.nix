@@ -111,6 +111,11 @@ in
   };
   home-manager.users.masato.xdg.dataFile."gnome-shell/extensions/keyboard-toggle@SAH046.github.io".source =
     "${pkgs.gnomeExtensions.keyboard-toggle}/share/gnome-shell/extensions/keyboard-toggle@SAH046.github.io";
+  # GNOME gives an empty suggestions row less height than a row containing
+  # candidate buttons. Keep the row at a constant height so Mozc updates do not
+  # make the whole on-screen keyboard jump.
+  home-manager.users.masato.xdg.dataFile."gnome-shell/extensions/fixed-osk-suggestions-height@local".source =
+    ./gnome-shell-extensions/fixed-osk-suggestions-height;
   home-manager.users.masato.dconf.settings = {
     "org/gnome/desktop/a11y/applications" = {
       screen-keyboard-enabled = true;
@@ -179,6 +184,7 @@ in
       enabled-extensions = [
         "appindicatorsupport@rgcjonas.gmail.com"
         "dash-to-dock@micxgx.gmail.com"
+        "fixed-osk-suggestions-height@local"
         "keyboard-toggle@SAH046.github.io"
         "no-overview@fthx"
       ];

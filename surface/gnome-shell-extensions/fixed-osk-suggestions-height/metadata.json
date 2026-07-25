@@ -1,0 +1,7 @@
+{
+  "uuid": "fixed-osk-suggestions-height@local",
+  "name": "Fixed OSK Suggestions Height",
+  "description": "Prevents the on-screen keyboard from resizing when suggestions appear.",
+  "shell-version": ["50"],
+  "version": 1
+}
