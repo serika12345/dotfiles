@@ -8,12 +8,31 @@ let
   inherit (lib.gvariant) mkInt32 mkTuple mkUint32;
 in
 {
+  # TODO: Remove this overlay and surface/patches/mutter-text-input-v1-osk.patch
+  # once nixpkgs ships Mutter 50.3 or later, which contains upstream MR !5117.
+  # Mutter 50.2 removed the implicit input-panel request used by version 1
+  # text-input clients when it added version 2 of the protocol. GTK 4.22 still
+  # binds version 1, so retain the old fallback until the upstream fix is used.
+  nixpkgs.overlays = [
+    (final: prev: {
+      mutter = prev.mutter.overrideAttrs (oldAttrs: {
+        patches = (oldAttrs.patches or [ ]) ++ [
+          ./patches/mutter-text-input-v1-osk.patch
+        ];
+      });
+    })
+  ];
+
   # GNOME's on-screen keyboard follows IBus input sources, so use Mozc through
   # IBus instead of the Fcitx5 setup used by the desktop machine.
   i18n.inputMethod = {
     enable = true;
     type = "ibus";
     ibus.engines = with pkgs.ibus-engines; [ mozc-ut ];
+    # TODO: Re-evaluate this explicit setting when the NixOS IBus Wayland
+    # frontend becomes the default; keep using the compositor's text-input
+    # protocol rather than forcing the legacy IBus toolkit modules.
+    ibus.waylandFrontend = true;
   };
 
   services.xserver.enable = true;

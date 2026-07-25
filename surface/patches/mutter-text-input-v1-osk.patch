@@ -1,0 +1,40 @@
+diff --git a/src/wayland/meta-wayland-text-input.c b/src/wayland/meta-wayland-text-input.c
+index e0f9b289e..e43a5f9ee 100644
+--- a/src/wayland/meta-wayland-text-input.c
++++ b/src/wayland/meta-wayland-text-input.c
+@@ -847,6 +847,7 @@ text_input_commit_state (struct wl_client   *client,
+ {
+   MetaWaylandTextInput *text_input = wl_resource_get_user_data (resource);
+   ClutterInputFocus *focus = text_input->input_focus;
++  gboolean enable_panel = FALSE;
+   MetaBackend *backend = backend_from_text_input (text_input);
+   ClutterBackend *clutter_backend =
+     meta_backend_get_clutter_backend (backend);
+@@ -868,6 +869,16 @@ text_input_commit_state (struct wl_client   *client,
+ 
+           if (!clutter_input_focus_is_focused (focus))
+             clutter_input_method_focus_in (input_method, focus);
++          /*
++           * TODO: Drop this downstream compatibility patch when nixpkgs
++           * provides Mutter 50.3 or later (upstream MR !5117).
++           *
++           * Version 1 has no show_input_panel request. Keep the old
++           * repeated-enable fallback for clients that have not adopted
++           * version 2 yet.
++           */
++          else if (wl_resource_get_version (resource) < 2)
++            enable_panel = TRUE;
+ 
+           can_show_preedit =
+             wl_resource_get_version (resource) <
+@@ -962,6 +973,10 @@ text_input_commit_state (struct wl_client   *client,
+       clutter_input_focus_set_input_panel_state (focus, panel_state);
+     }
+ 
++  if (enable_panel)
++    clutter_input_focus_set_input_panel_state (focus,
++                                               CLUTTER_INPUT_PANEL_STATE_ON);
++
+   meta_wayland_text_input_focus_defer_done (focus);
+   meta_wayland_text_input_reset (text_input);
+ }
