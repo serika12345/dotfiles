@@ -4,7 +4,8 @@ Surface Pro 7用のNixOS設定です。GNOMEをタブレット向けに調整し
 
 - `linux-surface`、IPTSタッチ・ペン、画面回転センサー
 - 電源ボタンを押したときのサスペンド
-- 左側に常時表示するGNOMEドック
+- TouchUpによるジェスチャーナビゲーション、通知・画面キーボード操作
+- 自動非表示の下部GNOMEドック
 - GNOME画面キーボード
 - IBus + Mozc UTによる日本語入力
 - 200%表示スケール
@@ -30,10 +31,20 @@ sudo nixos-rebuild switch --flake .#surface
 入力メソッドの環境変数はログイン時に決まるため、設定の適用後は一度ログアウトして
 ログインし直してください。
 
+TouchUpのナビゲーションバーはGNOMEのタッチモードで表示されます。画面下端からの
+ジェスチャー、通知のスワイプ操作、画面キーボードのスワイプ終了、回転ロック時の
+フローティング回転ボタンを有効にします。クリップボード内容を読むOSKのクイック
+ペースト機能は無効にします。
+
 <!-- TODO: nixpkgsがMutter 50.3以降になったら互換パッチとこの説明を削除する。 -->
 GNOME 50.2のMutterはtext-input-v3のversion 2を実装した際、version 1クライアントが
 画面キーボードを再表示するために使っていた互換動作を削除しました。GTK 4.22はまだ
 version 1を使うため、この構成ではMutterへその互換動作を戻すパッチを適用します。
+
+## TODO
+
+Type Coverのタッチパッド操作までモバイルOS風に揃える場合は、
+`pkgs.gnomeExtensions.touchpad-gesture-customization`の導入を検討します。
 
 ## 既知の制限
 

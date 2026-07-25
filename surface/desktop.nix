@@ -111,6 +111,11 @@ in
   };
   home-manager.users.masato.xdg.dataFile."gnome-shell/extensions/keyboard-toggle@SAH046.github.io".source =
     "${pkgs.gnomeExtensions.keyboard-toggle}/share/gnome-shell/extensions/keyboard-toggle@SAH046.github.io";
+  home-manager.users.masato.xdg.dataFile."gnome-shell/extensions/touchup@mityax".source =
+    "${pkgs.gnomeExtensions.touchup}/share/gnome-shell/extensions/touchup@mityax";
+  # TODO: If Type Cover touchpad gestures should match the tablet gestures, add
+  # pkgs.gnomeExtensions.touchpad-gesture-customization and enable
+  # touchpad-gesture-customization@coooolapps.com.
   # GNOME gives an empty suggestions row less height than a row containing
   # candidate buttons. Keep the row at a constant height so Mozc updates do not
   # make the whole on-screen keyboard jump.
@@ -187,6 +192,7 @@ in
         "fixed-osk-suggestions-height@local"
         "keyboard-toggle@SAH046.github.io"
         "no-overview@fthx"
+        "touchup@mityax"
       ];
       favorite-apps = [
         "firefox.desktop"
@@ -198,14 +204,37 @@ in
     };
 
     "org/gnome/shell/extensions/dash-to-dock" = {
-      autohide = false;
-      background-opacity = 0.8;
+      autohide = true;
+      background-opacity = 0.7;
       dash-max-icon-size = mkInt32 48;
-      dock-fixed = true;
-      dock-position = "LEFT";
-      extend-height = true;
-      intellihide = false;
+      dock-fixed = false;
+      dock-position = "BOTTOM";
+      extend-height = false;
+      intellihide = true;
       show-apps-at-top = false;
+    };
+
+    "org/gnome/shell/extensions/touchup" = {
+      desktop-background-gestures-enabled = true;
+      double-tap-to-sleep-enabled = true;
+      navigation-bar-enabled = true;
+      navigation-bar-gestures-base-dist-factor = mkInt32 2;
+      navigation-bar-gestures-invisible-mode = "never";
+      navigation-bar-gestures-reserve-space = true;
+      navigation-bar-ignore-touch-mode = false;
+      navigation-bar-mode = "gestures";
+      notification-gestures-enabled = true;
+      osk-gestures-extend-keys-enabled = true;
+      osk-gestures-swipe-to-close-enabled = true;
+      osk-key-popups-enabled = true;
+      osk-key-popups-duration = mkInt32 35;
+      osk-key-popups-style = "accent";
+      osk-quick-paste-action-enabled = false;
+      osk-space-bar-ime-switching-enabled = true;
+      overview-background-gestures-enabled = true;
+      screen-rotate-utils-floating-screen-rotate-button-enabled = true;
+      virtual-touchpad-enabled = true;
+      window-preview-gestures-enabled = true;
     };
   };
 
