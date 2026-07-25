@@ -76,7 +76,7 @@ in
       engines {
         name : "mozc-jp"
         longname : "Mozc"
-        layout : "default"
+        layout : "jp"
         layout_variant : ""
         layout_option : ""
         rank : 80
@@ -85,7 +85,7 @@ in
       engines {
         name : "mozc-on"
         longname : "Mozc:あ"
-        layout : "default"
+        layout : "jp"
         layout_variant : ""
         layout_option : ""
         rank : 99
@@ -95,7 +95,7 @@ in
       engines {
         name : "mozc-off"
         longname : "Mozc:A_"
-        layout : "default"
+        layout : "jp"
         layout_variant : ""
         layout_option : ""
         rank : 99
