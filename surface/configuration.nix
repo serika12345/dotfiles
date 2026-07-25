@@ -133,7 +133,11 @@ in
   };
 
   virtualisation.docker.enable = true;
-  services.flatpak.enable = true;
+  services.flatpak = {
+    enable = true;
+    packages = [ "com.bitwarden.desktop" ];
+    update.onActivation = true;
+  };
   programs.appimage = {
     enable = true;
     binfmt = true;
