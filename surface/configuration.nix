@@ -5,6 +5,14 @@
 
 let
   bitwardenSshAgentSocket = "/home/masato/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock";
+  kritaWayland = pkgs.symlinkJoin {
+    name = "krita-wayland";
+    paths = [ pkgs.krita ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/krita" --set QT_QPA_PLATFORM wayland
+    '';
+  };
 in
 {
   imports = [
@@ -168,7 +176,7 @@ in
     git
     htop
     jq
-    krita
+    kritaWayland
     nettools
     nixfmt
     nodejs_24
