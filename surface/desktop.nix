@@ -132,6 +132,9 @@ in
     };
 
     "org/gnome/shell" = {
+      # GNOME hides Log Out for a single local user with one session unless
+      # this is enabled. Keep it available from the power menu.
+      always-show-log-out = true;
       disable-user-extensions = false;
       enabled-extensions = [
         "appindicatorsupport@rgcjonas.gmail.com"

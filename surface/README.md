@@ -34,3 +34,10 @@ sudo nixos-rebuild switch --flake .#surface
 GNOME 50.2のMutterはtext-input-v3のversion 2を実装した際、version 1クライアントが
 画面キーボードを再表示するために使っていた互換動作を削除しました。GTK 4.22はまだ
 version 1を使うため、この構成ではMutterへその互換動作を戻すパッチを適用します。
+
+## 既知の制限
+
+BitwardenのFlatpak版では、入力欄をタッチしてもGNOMEの画面キーボードが自動表示
+されません。Electron/ChromiumとGNOME Waylandの入力プロトコル連携に起因するため、
+この構成にはBitwarden固有の回避処理を含めません。入力時は上部パネルのキーボード
+ボタンを使用してください。
