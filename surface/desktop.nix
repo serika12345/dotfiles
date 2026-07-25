@@ -69,6 +69,46 @@ in
   programs.dconf.enable = true;
   # Write these values to the user's dconf database. System profile values are
   # only defaults and lose to values already stored by a previous GNOME login.
+  home-manager.users.masato.xdg.configFile."mozc/ibus_config.textproto" = {
+    # Replace the configuration file initially created by Mozc.
+    force = true;
+    text = ''
+      engines {
+        name : "mozc-jp"
+        longname : "Mozc"
+        layout : "default"
+        layout_variant : ""
+        layout_option : ""
+        rank : 80
+        symbol : "あ"
+      }
+      engines {
+        name : "mozc-on"
+        longname : "Mozc:あ"
+        layout : "default"
+        layout_variant : ""
+        layout_option : ""
+        rank : 99
+        symbol : "あ"
+        composition_mode : HIRAGANA
+      }
+      engines {
+        name : "mozc-off"
+        longname : "Mozc:A_"
+        layout : "default"
+        layout_variant : ""
+        layout_option : ""
+        rank : 99
+        symbol : "A"
+        composition_mode : DIRECT
+      }
+      active_on_launch: False
+      mozc_renderer {
+        # Use GNOME's IBus candidate UI so candidates appear on the OSK.
+        enabled : False
+      }
+    '';
+  };
   home-manager.users.masato.xdg.dataFile."gnome-shell/extensions/keyboard-toggle@SAH046.github.io".source =
     "${pkgs.gnomeExtensions.keyboard-toggle}/share/gnome-shell/extensions/keyboard-toggle@SAH046.github.io";
   home-manager.users.masato.dconf.settings = {
