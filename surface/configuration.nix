@@ -3,6 +3,9 @@
   ...
 }:
 
+let
+  bitwardenSshAgentSocket = "/home/masato/.bitwarden-ssh-agent.sock";
+in
 {
   imports = [
     ./hardware-configuration.nix
@@ -58,7 +61,14 @@
     "nix-command"
     "flakes"
   ];
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true;
+    # Bitwarden Desktop currently depends on this Electron release.
+    permittedInsecurePackages = [ "electron-39.8.10" ];
+  };
+
+  # Bitwarden Desktop exposes its SSH agent at this socket on Linux.
+  environment.sessionVariables.SSH_AUTH_SOCK = bitwardenSshAgentSocket;
 
   services.displayManager.autoLogin.enable = false;
   services.getty.autologinUser = null;
@@ -89,6 +99,9 @@
   home-manager.backupFileExtension = "backup";
   home-manager.users.masato = {
     home.stateVersion = "26.05";
+
+    xdg.configFile."autostart/bitwarden.desktop".source =
+      "${pkgs.bitwarden-desktop}/share/applications/bitwarden.desktop";
 
     programs.bash.enable = true;
     programs.git = {
@@ -138,6 +151,7 @@
   environment.systemPackages = with pkgs; [
     appimage-run
     bat
+    bitwarden-desktop
     codex
     direnv
     fd
