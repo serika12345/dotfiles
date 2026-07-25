@@ -125,6 +125,8 @@ in
       ambient-enabled = false;
       # Settings > Power > Automatic Power Saver
       power-saver-profile-on-low-battery = false;
+      # Suspend when the physical power button is pressed.
+      power-button-action = "suspend";
       # Settings > Power > Automatic Suspend > When Plugged In
       sleep-inactive-ac-type = "nothing";
     };

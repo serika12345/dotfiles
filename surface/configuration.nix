@@ -17,6 +17,12 @@ in
     configurationLimit = 5;
   };
   boot.loader.efi.canTouchEfiVariables = true;
+  # The Surface buttons are GPIO devices. If soc_button_array wins the module
+  # loading race, it probes before Ice Lake pinctrl is ready and never creates
+  # the power/volume input devices.
+  boot.extraModprobeConfig = ''
+    softdep soc_button_array pre: pinctrl_icelake
+  '';
 
   # Supplied by nixos-hardware's microsoft-surface-pro-intel profile.
   hardware.microsoft-surface.kernelVersion = "stable";
@@ -28,6 +34,10 @@ in
 
   networking.hostName = "surface";
   networking.networkmanager.enable = true;
+
+  # GNOME normally handles the button while a session is active. Keep logind
+  # as a fallback for GDM, TTY sessions, or when GNOME is not running.
+  services.logind.settings.Login.HandlePowerKey = "suspend";
 
   time.timeZone = "Asia/Tokyo";
   i18n.defaultLocale = "en_US.UTF-8";
