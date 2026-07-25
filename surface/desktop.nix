@@ -132,25 +132,25 @@ in
     };
 
     "org/gnome/desktop/input-sources" = {
-      current = mkUint32 1;
+      current = mkUint32 0;
       sources = [
         (mkTuple [
-          "xkb"
-          "jp"
+          "ibus"
+          "mozc-on"
         ])
         (mkTuple [
           "ibus"
-          "mozc-jp"
+          "mozc-off"
         ])
       ];
       mru-sources = [
         (mkTuple [
           "ibus"
-          "mozc-jp"
+          "mozc-on"
         ])
         (mkTuple [
-          "xkb"
-          "jp"
+          "ibus"
+          "mozc-off"
         ])
       ];
       per-window = false;
