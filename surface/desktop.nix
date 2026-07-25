@@ -102,6 +102,8 @@ in
           idle-dim = false;
           # Settings > Power > Automatic Screen Brightness
           ambient-enabled = false;
+          # Settings > Power > Automatic Power Saver
+          power-saver-profile-on-low-battery = false;
           # Settings > Power > Automatic Suspend > When Plugged In
           sleep-inactive-ac-type = "nothing";
         };
