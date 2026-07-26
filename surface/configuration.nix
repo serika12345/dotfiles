@@ -58,7 +58,13 @@ in
   hardware.enableRedistributableFirmware = true;
   hardware.graphics.enable = true;
   hardware.sensor.iio.enable = true;
-  services.iptsd.enable = true;
+  services.iptsd = {
+    enable = true;
+    config.Touchscreen = {
+      DisableOnPalm = true;
+      DisableOnStylus = true;
+    };
+  };
   services.thermald.enable = true;
 
   networking.hostName = "surface";
