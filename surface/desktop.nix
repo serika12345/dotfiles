@@ -43,6 +43,7 @@ in
   services.gnome.core-apps.enable = false;
   services.gnome.core-developer-tools.enable = true;
   services.gnome.games.enable = false;
+  services.gnome.sushi.enable = true;
 
   # GNOME implementation of the KDE Connect protocol. The NixOS module also
   # opens the TCP/UDP port range 1714-1764 required for device discovery.
@@ -74,6 +75,35 @@ in
   documentation.nixos.enable = false;
 
   programs.dconf.enable = true;
+  xdg.mime.defaultApplications = lib.genAttrs [
+    "image/apng"
+    "image/avif"
+    "image/bmp"
+    "image/gif"
+    "image/heic"
+    "image/jp2"
+    "image/jpeg"
+    "image/jxl"
+    "image/png"
+    "image/qoi"
+    "image/svg+xml"
+    "image/svg+xml-compressed"
+    "image/tiff"
+    "image/vnd.microsoft.icon"
+    "image/webp"
+    "image/x-dds"
+    "image/x-exr"
+    "image/x-portable-anymap"
+    "image/x-portable-bitmap"
+    "image/x-portable-graymap"
+    "image/x-portable-pixmap"
+    "image/x-qoi"
+    "image/x-tga"
+    "image/x-win-bitmap"
+    "image/x-xbitmap"
+    "image/x-xpixmap"
+  ] (_: [ "org.gnome.Loupe.desktop" ]);
+
   # Write these values to the user's dconf database. System profile values are
   # only defaults and lose to values already stored by a previous GNOME login.
   home-manager.users.masato.xdg.configFile."mozc/ibus_config.textproto" = {
@@ -267,6 +297,7 @@ in
     gnomeExtensions.appindicator
     gnomeExtensions.dash-to-dock
     gnomeExtensions.no-overview
+    loupe
     nautilus
   ];
 }

@@ -37,6 +37,20 @@ in
     softdep soc_button_array pre: pinctrl_icelake
   '';
 
+  # The power and volume buttons are separate gpio-keys devices with the same
+  # ID. keyd shares state between devices matched by one configuration, allowing
+  # the Windows-style button chord while preserving each button's normal action.
+  services.keyd = {
+    enable = true;
+    keyboards.surfaceButtons = {
+      ids = [ "0001:0001" ];
+      settings = {
+        global.chord_timeout = 150;
+        main."power+volumeup" = "S-print";
+      };
+    };
+  };
+
   # Supplied by nixos-hardware's microsoft-surface-pro-intel profile.
   hardware.microsoft-surface.kernelVersion = "stable";
   hardware.enableRedistributableFirmware = true;

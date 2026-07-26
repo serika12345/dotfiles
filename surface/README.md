@@ -4,11 +4,14 @@ Surface Pro 7用のNixOS設定です。GNOMEをタブレット向けに調整し
 
 - `linux-surface`、IPTSタッチ・ペン、画面回転センサー
 - 電源ボタンを押したときのサスペンド
+- 電源ボタンと音量上ボタンの同時押しによる全画面スクリーンショット
 - TouchUpによるジェスチャーナビゲーション、通知・画面キーボード操作
 - 自動非表示の下部GNOMEドック
 - GNOME画面キーボード
 - IBus + Mozc UTによる日本語入力
 - 200%表示スケール
+- Loupeによる画像表示
+- SushiによるNautilusのファイルプレビュー
 - Krita
 - Bitwarden Desktop
 
