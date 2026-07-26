@@ -54,18 +54,20 @@ in
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
+    includes = [ "${config.home.homeDirectory}/.colima/ssh_config" ];
     matchBlocks = {
       "*" = {
         forwardAgent = false;
         addKeysToAgent = "no";
         compression = false;
-        serverAliveInterval = 0;
+        serverAliveInterval = 120;
         serverAliveCountMax = 3;
         hashKnownHosts = false;
         userKnownHostsFile = "~/.ssh/known_hosts";
         controlMaster = "no";
         controlPath = "~/.ssh/master-%r@%n:%p";
         controlPersist = "no";
+        extraOptions.GSSAPIAuthentication = "no";
       };
 
       "github.com" = {
@@ -84,6 +86,25 @@ in
         user = "masato";
         forwardAgent = true;
         identityAgent = bitwardenSshAgentSocket;
+      };
+
+      "surface.local" = {
+        user = "masato";
+      };
+
+      "192.168.100.7" = { };
+
+      "192.168.100.6" = {
+        user = "masato";
+      };
+
+      "192.168.100.5" = {
+        user = "masato";
+        forwardAgent = true;
+      };
+
+      "192.168.100.1" = {
+        extraOptions.PreferredAuthentications = "password";
       };
     };
   };
