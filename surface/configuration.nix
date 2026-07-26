@@ -24,6 +24,7 @@ in
   imports = [
     ./hardware-configuration.nix
     ./desktop.nix
+    ./rclone.nix
   ];
 
   boot.loader.systemd-boot = {

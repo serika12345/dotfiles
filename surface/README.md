@@ -14,6 +14,7 @@ Surface Pro 7用のNixOS設定です。GNOMEをタブレット向けに調整し
 - SushiによるNautilusのファイルプレビュー
 - Krita
 - Bitwarden Desktop
+- rcloneによるProton Driveマウント
 
 ## インストール後の適用
 
@@ -39,6 +40,36 @@ TouchUpのナビゲーションバーはGNOMEのタッチモードで表示さ�
 ジェスチャー、通知のスワイプ操作、画面キーボードのスワイプ終了、回転ロック時の
 フローティング回転ボタンを有効にします。クリップボード内容を読むOSKのクイック
 ペースト機能は無効にします。
+
+## Proton Drive
+
+この構成ではrcloneのProton Drive backendを使います。認証情報はNixでは管理せず、
+実機で `rclone config` に手入力します。Proton Driveの暗号鍵がまだ作られていない
+アカウントではrcloneの認証が失敗するため、先にブラウザからProton Driveへ通常ログイン
+しておきます。
+
+設定適用後、次を実行して `protondrive` というremoteを作成します。
+
+```console
+rclone-protondrive-config
+```
+
+プロンプトでは新規remoteを作成し、名前に `protondrive`、storage typeに
+`protondrive` を指定して、Protonアカウント、パスワード、必要なら2FAコードを入力します。
+疎通確認は次の通りです。
+
+```console
+rclone lsd protondrive:
+```
+
+`~/.config/rclone/rclone.conf` に `protondrive` remoteが存在すると、ログイン時にuser
+service `rclone-protondrive.service` が `~/ProtonDrive` へマウントします。すぐに反映する
+場合は次を実行します。
+
+```console
+systemctl --user restart rclone-protondrive.service
+journalctl --user -u rclone-protondrive.service -f
+```
 
 <!-- TODO: nixpkgsがMutter 50.3以降になったら互換パッチとこの説明を削除する。 -->
 GNOME 50.2のMutterはtext-input-v3のversion 2を実装した際、version 1クライアントが
