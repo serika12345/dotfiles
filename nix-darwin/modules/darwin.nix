@@ -76,6 +76,12 @@
   # The platform the configuration will be used on.
   nixpkgs.hostPlatform = "aarch64-darwin";
 
+  networking = {
+    computerName = "macbookair";
+    hostName = "macbookair";
+    localHostName = "macbookair";
+  };
+
   # from below, my personal preferences.
   users.users.masato = {
     name = "masato";

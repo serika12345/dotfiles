@@ -62,6 +62,17 @@ in
 
   networking.hostName = "surface";
   networking.networkmanager.enable = true;
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+    wideArea = false;
+    publish = {
+      enable = true;
+      addresses = true;
+      workstation = true;
+    };
+  };
 
   # GNOME normally handles the button while a session is active. Keep logind
   # as a fallback for GDM, TTY sessions, or when GNOME is not running.

@@ -28,6 +28,17 @@ in
 
   # Enable networking
   networking.networkmanager.enable = true;
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+    wideArea = false;
+    publish = {
+      enable = true;
+      addresses = true;
+      workstation = true;
+    };
+  };
 
   # Set your time zone.
   time.timeZone = "Asia/Tokyo";
