@@ -230,6 +230,7 @@
     "raspberry-pi-imager"
     "fujitsu-scansnap-home"
     "krita"
+    "kde-connect"
   ];
 
   # App Store apps
