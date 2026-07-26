@@ -8,8 +8,8 @@ let
   inherit (lib.gvariant) mkInt32 mkTuple mkUint32;
 in
 {
-  # TODO: Remove this overlay and surface/patches/mutter-text-input-v1-osk.patch
-  # once nixpkgs ships Mutter 50.3 or later, which contains upstream MR !5117.
+  # TODO: Remove surface/patches/mutter-text-input-v1-osk.patch once nixpkgs
+  # ships Mutter 50.3 or later, which contains upstream MR !5117.
   # Mutter 50.2 removed the implicit input-panel request used by version 1
   # text-input clients when it added version 2 of the protocol. GTK 4.22 still
   # binds version 1, so retain the old fallback until the upstream fix is used.
@@ -18,6 +18,9 @@ in
       mutter = prev.mutter.overrideAttrs (oldAttrs: {
         patches = (oldAttrs.patches or [ ]) ++ [
           ./patches/mutter-text-input-v1-osk.patch
+          # Drawing apps render their own brush outline; suppress Mutter's
+          # separate tablet-tool cursor so it does not overlap that outline.
+          ./patches/mutter-hide-tablet-cursor.patch
         ];
       });
     })
@@ -269,7 +272,7 @@ in
 
     "org/gnome/shell/extensions/touchup" = {
       desktop-background-gestures-enabled = true;
-      double-tap-to-sleep-enabled = true;
+      double-tap-to-sleep-enabled = false;
       navigation-bar-enabled = true;
       navigation-bar-gestures-base-dist-factor = mkInt32 2;
       navigation-bar-gestures-invisible-mode = "never";
