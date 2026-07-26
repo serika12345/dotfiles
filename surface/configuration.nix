@@ -1,4 +1,5 @@
 {
+  codexPackage,
   pkgs,
   ...
 }:
@@ -193,7 +194,7 @@ in
     appimage-run
     bat
     bitwardenDesktop
-    codex
+    codexPackage
     direnv
     fd
     fzf

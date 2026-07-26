@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  codexPackage,
+  config,
+  pkgs,
+  ...
+}:
 let
   desktopModule = ./desktop/gnome.nix;
   bitwardenSshAgentSocket = "/home/masato/.bitwarden-ssh-agent.sock";
@@ -266,7 +271,7 @@ in
     direnv
     nixfmt
     bitwarden-desktop
-    codex
+    codexPackage
     appimage-run
   ];
 

@@ -1,0 +1,72 @@
+name: Update Codex
+
+on:
+  schedule:
+    - cron: "17 19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-codex
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
+
+      - name: Update Codex inputs
+        run: |
+          nix flake update codex-nixpkgs --flake ./surface
+          nix flake update codex-nixpkgs --flake ./nixos
+
+      - name: Detect changes
+        id: changes
+        run: |
+          if git diff --quiet -- surface/flake.lock nixos/flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify NixOS configurations
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          nix flake check ./surface --no-build
+          nix flake check ./nixos --no-build
+
+      - name: Create update pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(nix eval --raw './surface#codex.version')
+          branch=automation/update-codex
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add surface/flake.lock nixos/flake.lock
+          git commit -m "Update Codex to $version"
+          git push --force-with-lease origin "$branch"
+
+          body="Updates the dedicated Codex inputs to version \`$version\`. Both NixOS configurations passed \`nix flake check --no-build\`."
+          if gh pr view "$branch" --json number >/dev/null 2>&1; then
+            gh pr edit "$branch" --title "Update Codex to $version" --body "$body"
+          else
+            gh pr create \
+              --base "$GITHUB_REF_NAME" \
+              --head "$branch" \
+              --title "Update Codex to $version" \
+              --body "$body"
+          fi

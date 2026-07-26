@@ -4,6 +4,8 @@
   inputs = {
     # Keep this aligned with the custom installer.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # Updated independently by .github/workflows/update-codex.yml.
+    codex-nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     nixos-hardware = {
       url = "github:NixOS/nixos-hardware/master";
@@ -18,14 +20,20 @@
 
   outputs =
     {
+      codex-nixpkgs,
       home-manager,
       nixos-hardware,
       nixpkgs,
       ...
     }:
+    let
+      system = "x86_64-linux";
+      codexPackage = codex-nixpkgs.legacyPackages.${system}.codex;
+    in
     {
       nixosConfigurations.surface = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
+        inherit system;
+        specialArgs = { inherit codexPackage; };
         modules = [
           nixos-hardware.nixosModules.microsoft-surface-pro-intel
           ./configuration.nix
@@ -37,6 +45,7 @@
         ];
       };
 
-      formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
+      packages.${system}.codex = codexPackage;
+      formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-tree;
     };
 }
