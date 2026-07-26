@@ -73,14 +73,14 @@ in
       };
 
       "nixos" = {
-        host = "nixos nixos.local";
+        hostname = "nixos.local";
         user = "masato";
         forwardAgent = true;
         identityAgent = bitwardenSshAgentSocket;
       };
 
       "surface" = {
-        host = "surface surface.local";
+        hostname = "surface.local";
         user = "masato";
         forwardAgent = true;
         identityAgent = bitwardenSshAgentSocket;
