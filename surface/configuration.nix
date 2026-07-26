@@ -4,7 +4,12 @@
 }:
 
 let
-  bitwardenSshAgentSocket = "/home/masato/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock";
+  bitwardenSshAgentSocket = "/home/masato/.bitwarden-ssh-agent.sock";
+  bitwardenDesktop = pkgs.bitwarden-desktop.overrideAttrs (_oldAttrs: {
+    # nixpkgs does not currently provide a substitute for this derivation in
+    # the pinned revision. Skip the Rust test phase to keep local builds short.
+    doCheck = false;
+  });
   kritaWayland = pkgs.symlinkJoin {
     name = "krita-wayland";
     paths = [ pkgs.krita ];
@@ -75,13 +80,24 @@ in
     noto-fonts-color-emoji
   ];
 
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
-  nixpkgs.config.allowUnfree = true;
+  nix.settings = {
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+    # Prefer shorter wall-clock rebuilds on the Surface when packages are not
+    # substituted from cache.
+    max-jobs = "auto";
+    cores = 0;
+  };
+  nixpkgs.config = {
+    allowUnfree = true;
+    # Required by the Electron version used by bitwarden-desktop in the pinned
+    # nixpkgs revision.
+    permittedInsecurePackages = [ "electron-39.8.10" ];
+  };
 
-  # The Flatpak build exposes its SSH agent at this socket.
+  # Bitwarden Desktop exposes its SSH agent at this socket on Linux.
   environment.sessionVariables.SSH_AUTH_SOCK = bitwardenSshAgentSocket;
 
   services.displayManager.autoLogin.enable = false;
@@ -142,13 +158,6 @@ in
   };
 
   virtualisation.docker.enable = true;
-  services.flatpak = {
-    enable = true;
-    # Bitwarden creates its own XDG Portal autostart entry when "Start
-    # automatically on login" is enabled in the app.
-    packages = [ "com.bitwarden.desktop" ];
-    update.onActivation = true;
-  };
   programs.appimage = {
     enable = true;
     binfmt = true;
@@ -169,6 +178,7 @@ in
   environment.systemPackages = with pkgs; [
     appimage-run
     bat
+    bitwardenDesktop
     codex
     direnv
     fd

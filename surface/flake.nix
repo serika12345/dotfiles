@@ -14,14 +14,11 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    nix-flatpak.url = "github:gmodena/nix-flatpak/v0.7.0";
   };
 
   outputs =
     {
       home-manager,
-      nix-flatpak,
       nixos-hardware,
       nixpkgs,
       ...
@@ -31,7 +28,6 @@
         system = "x86_64-linux";
         modules = [
           nixos-hardware.nixosModules.microsoft-surface-pro-intel
-          nix-flatpak.nixosModules.nix-flatpak
           ./configuration.nix
           home-manager.nixosModules.home-manager
           {

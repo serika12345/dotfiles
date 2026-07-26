@@ -10,6 +10,7 @@ Surface Pro 7用のNixOS設定です。GNOMEをタブレット向けに調整し
 - IBus + Mozc UTによる日本語入力
 - 200%表示スケール
 - Krita
+- Bitwarden Desktop
 
 ## インストール後の適用
 
@@ -48,7 +49,7 @@ Type Coverのタッチパッド操作までモバイルOS風に揃える場合�
 
 ## 既知の制限
 
-BitwardenのFlatpak版では、入力欄をタッチしてもGNOMEの画面キーボードが自動表示
+Bitwardenは、入力欄をタッチしてもGNOMEの画面キーボードが自動表示
 されません。Electron/ChromiumとGNOME Waylandの入力プロトコル連携に起因するため、
 この構成にはBitwarden固有の回避処理を含めません。入力時は上部パネルのキーボード
 ボタンを使用してください。
