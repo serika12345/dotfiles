@@ -12,7 +12,6 @@ let
 
     exec ${pkgs.ncdu}/bin/ncdu \
       --one-file-system \
-      -r \
       --exclude "CloudStorage" \
       --exclude "Mobile Documents" \
       --exclude "ProtonDrive" \
