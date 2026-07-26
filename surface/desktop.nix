@@ -128,6 +128,10 @@ in
   # make the whole on-screen keyboard jump.
   home-manager.users.masato.xdg.dataFile."gnome-shell/extensions/fixed-osk-suggestions-height@local".source =
     ./gnome-shell-extensions/fixed-osk-suggestions-height;
+  home-manager.users.masato.xdg.dataFile."gnome-shell/extensions/surface-pen-battery@local" = {
+    force = true;
+    source = ./gnome-shell-extensions/surface-pen-battery;
+  };
   home-manager.users.masato.xdg.dataFile."applications/gsconnect.desktop".text = ''
     [Desktop Entry]
     Type=Application
@@ -210,6 +214,7 @@ in
         "gsconnect@andyholmes.github.io"
         "keyboard-toggle@SAH046.github.io"
         "no-overview@fthx"
+        "surface-pen-battery@local"
         "touchup@mityax"
       ];
       favorite-apps = [

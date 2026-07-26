@@ -1,0 +1,7 @@
+{
+  "uuid": "surface-pen-battery@local",
+  "name": "Surface Pen Battery",
+  "description": "Shows the Surface Pen battery percentage in the GNOME top bar.",
+  "shell-version": ["50"],
+  "version": 1
+}
