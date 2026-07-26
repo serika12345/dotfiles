@@ -2,6 +2,21 @@
 
 let
   bitwardenSshAgentSocket = "/Users/masato/.bitwarden-ssh-agent.sock";
+  scanHome = pkgs.writeShellScriptBin "scanhome" ''
+    set -euo pipefail
+
+    exec ${pkgs.ncdu}/bin/ncdu \
+      --one-file-system \
+      -r \
+      --exclude "CloudStorage" \
+      --exclude "Mobile Documents" \
+      --exclude "ProtonDrive" \
+      --exclude "Proton Drive" \
+      --exclude "OneDrive" \
+      --exclude "Google Drive" \
+      --exclude "Dropbox" \
+      "$HOME"
+  '';
 in
 
 {
@@ -9,6 +24,9 @@ in
     username = "masato";
     homeDirectory = "/Users/masato";
     stateVersion = "23.11";
+    packages = [
+      scanHome
+    ];
   };
 
   launchd.agents.colima = {

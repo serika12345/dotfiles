@@ -7,6 +7,21 @@
 let
   desktopModule = ./desktop/gnome.nix;
   bitwardenSshAgentSocket = "/home/masato/.bitwarden-ssh-agent.sock";
+  scanHome = pkgs.writeShellScriptBin "scanhome" ''
+    set -euo pipefail
+
+    exec ${pkgs.ncdu}/bin/ncdu \
+      --one-file-system \
+      -r \
+      --exclude "CloudStorage" \
+      --exclude "Mobile Documents" \
+      --exclude "ProtonDrive" \
+      --exclude "Proton Drive" \
+      --exclude "OneDrive" \
+      --exclude "Google Drive" \
+      --exclude "Dropbox" \
+      "$HOME"
+  '';
 in
 {
   imports = [
@@ -246,6 +261,10 @@ in
         enable = true;
         nix-direnv.enable = true;
       };
+
+      home.packages = [
+        scanHome
+      ];
     };
 
   # Install firefox.
@@ -283,6 +302,7 @@ in
     tree
     htop
     nettools
+    ncdu
     vscode
     direnv
     nixfmt

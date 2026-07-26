@@ -9,6 +9,21 @@ let
   protonDriveMount = "ProtonDrive";
   rcloneConfig = "%h/.config/rclone/rclone.conf";
   rcloneCacheDir = "%h/.cache/rclone/${protonDriveRemote}";
+  scanHome = pkgs.writeShellScriptBin "scanhome" ''
+    set -euo pipefail
+
+    exec ${pkgs.ncdu}/bin/ncdu \
+      --one-file-system \
+      -r \
+      --exclude "CloudStorage" \
+      --exclude "Mobile Documents" \
+      --exclude "${protonDriveMount}" \
+      --exclude "Proton Drive" \
+      --exclude "OneDrive" \
+      --exclude "Google Drive" \
+      --exclude "Dropbox" \
+      "$HOME"
+  '';
   rcloneProtonDriveConfig = pkgs.writeShellScriptBin "rclone-protondrive-config" ''
     set -euo pipefail
 
@@ -36,12 +51,14 @@ in
   programs.fuse.enable = true;
 
   environment.systemPackages = with pkgs; [
+    ncdu
     rclone
   ];
 
   home-manager.users.masato = {
     home.packages = [
       rcloneProtonDriveConfig
+      scanHome
     ];
 
     systemd.user.services.rclone-protondrive = {
