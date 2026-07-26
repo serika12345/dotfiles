@@ -44,6 +44,13 @@ in
   services.gnome.core-developer-tools.enable = true;
   services.gnome.games.enable = false;
 
+  # GNOME implementation of the KDE Connect protocol. The NixOS module also
+  # opens the TCP/UDP port range 1714-1764 required for device discovery.
+  programs.kdeconnect = {
+    enable = true;
+    package = pkgs.gnomeExtensions.gsconnect;
+  };
+
   environment.gnome.excludePackages = with pkgs; [
     cheese
     epiphany
@@ -121,6 +128,16 @@ in
   # make the whole on-screen keyboard jump.
   home-manager.users.masato.xdg.dataFile."gnome-shell/extensions/fixed-osk-suggestions-height@local".source =
     ./gnome-shell-extensions/fixed-osk-suggestions-height;
+  home-manager.users.masato.xdg.dataFile."applications/gsconnect.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=GSConnect
+    GenericName=Device Integration
+    Exec=${pkgs.glib.bin}/bin/gapplication action org.gnome.Shell.Extensions.GSConnect preferences
+    Icon=org.gnome.Shell.Extensions.GSConnect
+    Categories=Network;Settings;
+    Terminal=false
+  '';
   home-manager.users.masato.dconf.settings = {
     "org/gnome/desktop/a11y/applications" = {
       screen-keyboard-enabled = true;
@@ -190,6 +207,7 @@ in
         "appindicatorsupport@rgcjonas.gmail.com"
         "dash-to-dock@micxgx.gmail.com"
         "fixed-osk-suggestions-height@local"
+        "gsconnect@andyholmes.github.io"
         "keyboard-toggle@SAH046.github.io"
         "no-overview@fthx"
         "touchup@mityax"
