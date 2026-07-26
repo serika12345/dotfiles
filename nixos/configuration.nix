@@ -75,7 +75,12 @@ in
   };
 
   # Bitwarden Desktop exposes its SSH agent at this socket on Linux.
-  environment.sessionVariables.SSH_AUTH_SOCK = bitwardenSshAgentSocket;
+  environment.sessionVariables.BITWARDEN_SSH_AUTH_SOCK = bitwardenSshAgentSocket;
+  environment.extraInit = ''
+    if [ -z "''${SSH_AUTH_SOCK:-}" ]; then
+      export SSH_AUTH_SOCK="${bitwardenSshAgentSocket}"
+    fi
+  '';
 
   # Enable OpenGL
   hardware.graphics.enable = true;
@@ -281,11 +286,6 @@ in
   # vscodeで必要 https://wiki.nixos.org/wiki/Visual_Studio_Code
   programs.nix-ld.enable = true;
 
-  programs.ssh.extraConfig = ''
-    Host *
-      IdentityAgent ${bitwardenSshAgentSocket}
-  '';
-
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
@@ -302,6 +302,7 @@ in
     PasswordAuthentication = false;
     PermitRootLogin = "no";
     AllowUsers = [ "masato" ];
+    AllowAgentForwarding = true;
     KbdInteractiveAuthentication = false;
   };
 

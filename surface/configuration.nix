@@ -113,7 +113,12 @@ in
   };
 
   # Bitwarden Desktop exposes its SSH agent at this socket on Linux.
-  environment.sessionVariables.SSH_AUTH_SOCK = bitwardenSshAgentSocket;
+  environment.sessionVariables.BITWARDEN_SSH_AUTH_SOCK = bitwardenSshAgentSocket;
+  environment.extraInit = ''
+    if [ -z "''${SSH_AUTH_SOCK:-}" ]; then
+      export SSH_AUTH_SOCK="${bitwardenSshAgentSocket}"
+    fi
+  '';
 
   services.displayManager.autoLogin.enable = false;
   services.getty.autologinUser = null;
@@ -186,6 +191,7 @@ in
       PasswordAuthentication = false;
       PermitRootLogin = "no";
       AllowUsers = [ "masato" ];
+      AllowAgentForwarding = true;
       KbdInteractiveAuthentication = false;
     };
   };

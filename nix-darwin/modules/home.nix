@@ -1,5 +1,9 @@
 { config, pkgs, ... }:
 
+let
+  bitwardenSshAgentSocket = "/Users/masato/.bitwarden-ssh-agent.sock";
+in
+
 {
   home = {
     username = "masato";
@@ -43,6 +47,29 @@
       user = {
         name = "serika12345";
         email = "281916063+serika12345@users.noreply.github.com";
+      };
+    };
+  };
+
+  programs.ssh = {
+    enable = true;
+    matchBlocks = {
+      "github.com" = {
+        identityAgent = bitwardenSshAgentSocket;
+      };
+
+      "nixos" = {
+        host = "nixos nixos.local";
+        user = "masato";
+        forwardAgent = true;
+        identityAgent = bitwardenSshAgentSocket;
+      };
+
+      "surface" = {
+        host = "surface surface.local";
+        user = "masato";
+        forwardAgent = true;
+        identityAgent = bitwardenSshAgentSocket;
       };
     };
   };
