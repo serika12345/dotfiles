@@ -70,8 +70,10 @@ index 1f0c080..8a9256e 100644
  				m_touch->enable();
  		}
  
-@@ -85,7 +104,15 @@ public:
- 			if (m_touch->enabled())
+@@ -85,7 +104,16 @@ public:
+-			if (m_touch->enabled())
++			if ((stylus.proximity || m_stylus_in_proximity) &&
++			    m_touch->enabled())
  				m_touch->disable();
  		}
  
