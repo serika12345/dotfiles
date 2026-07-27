@@ -3,6 +3,7 @@
   lib,
   pkgs,
   self,
+  codexPackage,
   ...
 }:
 
@@ -39,6 +40,7 @@
 
   environment.systemPackages = with pkgs; [
     # コーディングエージェント向け
+    codexPackage
     ripgrep
     fd
     fzf

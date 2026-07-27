@@ -29,21 +29,23 @@ jobs:
         run: |
           nix flake update codex-nixpkgs --flake ./surface
           nix flake update codex-nixpkgs --flake ./nixos
+          nix flake update codex-nixpkgs --flake ./nix-darwin
 
       - name: Detect changes
         id: changes
         run: |
-          if git diff --quiet -- surface/flake.lock nixos/flake.lock; then
+          if git diff --quiet -- surface/flake.lock nixos/flake.lock nix-darwin/flake.lock; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Verify NixOS configurations
+      - name: Verify configurations
         if: steps.changes.outputs.changed == 'true'
         run: |
           nix flake check ./surface --no-build
           nix flake check ./nixos --no-build
+          nix flake check ./nix-darwin --no-build
 
       - name: Create update pull request
         if: steps.changes.outputs.changed == 'true'
@@ -56,11 +58,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$branch"
-          git add surface/flake.lock nixos/flake.lock
+          git add surface/flake.lock nixos/flake.lock nix-darwin/flake.lock
           git commit -m "Update Codex to $version"
           git push --force-with-lease origin "$branch"
 
-          body="Updates the dedicated Codex inputs to version \`$version\`. Both NixOS configurations passed \`nix flake check --no-build\`."
+          body="Updates the dedicated Codex inputs to version \`$version\`. The NixOS and nix-darwin configurations passed \`nix flake check --no-build\`."
           if gh pr view "$branch" --json number >/dev/null 2>&1; then
             gh pr edit "$branch" --title "Update Codex to $version" --body "$body"
           else
