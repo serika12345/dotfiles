@@ -11,14 +11,6 @@ let
     # the pinned revision. Skip the Rust test phase to keep local builds short.
     doCheck = false;
   });
-  kritaWayland = pkgs.symlinkJoin {
-    name = "krita-wayland";
-    paths = [ pkgs.krita ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram "$out/bin/krita" --set QT_QPA_PLATFORM wayland
-    '';
-  };
   sshSuspendInhibitor = pkgs.writeShellApplication {
     name = "ssh-suspend-inhibitor";
     runtimeInputs = [
@@ -73,6 +65,7 @@ in
   imports = [
     ./hardware-configuration.nix
     ./desktop.nix
+    ./krita.nix
     ./rclone.nix
   ];
 
@@ -298,7 +291,6 @@ in
     git
     htop
     jq
-    kritaWayland
     nettools
     nixfmt
     nodejs_24
