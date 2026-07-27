@@ -286,7 +286,7 @@ in
       osk-key-popups-duration = mkInt32 35;
       osk-key-popups-style = "accent";
       osk-quick-paste-action-enabled = false;
-      osk-space-bar-ime-switching-enabled = true;
+      osk-space-bar-ime-switching-enabled = false;
       overview-background-gestures-enabled = true;
       screen-rotate-utils-floating-screen-rotate-button-enabled = true;
       virtual-touchpad-enabled = true;
