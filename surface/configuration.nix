@@ -19,6 +19,52 @@ let
       wrapProgram "$out/bin/krita" --set QT_QPA_PLATFORM wayland
     '';
   };
+  sshSuspendInhibitor = pkgs.writeShellApplication {
+    name = "ssh-suspend-inhibitor";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.systemd
+    ];
+    text = ''
+      has_ssh_session() {
+        local session
+
+        while read -r session _; do
+          if [ "$(loginctl show-session "$session" --property=Service --value)" = "sshd" ]; then
+            return 0
+          fi
+        done < <(loginctl list-sessions --no-legend)
+
+        return 1
+      }
+
+      case "''${1:-monitor}" in
+        monitor)
+          while true; do
+            if has_ssh_session; then
+              systemd-inhibit \
+                --what=sleep \
+                --who=sshd \
+                --why="An SSH session is active" \
+                --mode=block \
+                "$0" wait
+            else
+              sleep 1
+            fi
+          done
+          ;;
+        wait)
+          while has_ssh_session; do
+            sleep 1
+          done
+          ;;
+        *)
+          echo "usage: ssh-suspend-inhibitor [monitor|wait]" >&2
+          exit 2
+          ;;
+      esac
+    '';
+  };
 in
 {
   imports = [
@@ -211,6 +257,20 @@ in
       AllowUsers = [ "masato" ];
       AllowAgentForwarding = true;
       KbdInteractiveAuthentication = false;
+    };
+  };
+
+  # Keep the machine awake while logind knows about at least one OpenSSH
+  # session. OpenSSH registers its sessions with logind through PAM.
+  systemd.services.ssh-suspend-inhibitor = {
+    description = "Prevent suspend while an SSH session is active";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "systemd-logind.service" ];
+    wants = [ "systemd-logind.service" ];
+    serviceConfig = {
+      ExecStart = "${sshSuspendInhibitor}/bin/ssh-suspend-inhibitor";
+      Restart = "always";
+      RestartSec = 1;
     };
   };
 
