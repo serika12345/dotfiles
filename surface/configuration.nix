@@ -30,7 +30,10 @@ let
         local session
 
         while read -r session _; do
-          if [ "$(loginctl show-session "$session" --property=Service --value)" = "sshd" ]; then
+          if
+            [ "$(loginctl show-session "$session" --property=Service --value)" = "sshd" ] &&
+              [ "$(loginctl show-session "$session" --property=State --value)" = "active" ]
+          then
             return 0
           fi
         done < <(loginctl list-sessions --no-legend)
