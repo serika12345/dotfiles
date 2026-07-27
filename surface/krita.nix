@@ -13,6 +13,14 @@ in
 {
   environment.systemPackages = [ kritaWayland ];
 
+  # The Surface Pen's tail button sends Meta+F20 for a single click. Rewrite
+  # F20 as F12 at device creation time so that even the first event after the
+  # Bluetooth device wakes cannot trigger GNOME's Meta+F20 action.
+  services.udev.extraHwdb = ''
+    evdev:input:b0005v045Ep0921*
+     KEYBOARD_KEY_7006f=f12
+  '';
+
   # Keep Krita's brush smoothing defaults reproducible without managing the
   # entire mutable kritarc file. In Krita's config, DistanceMin is the sample
   # count at maximum speed and DistanceMax is the count at minimum speed.
