@@ -43,4 +43,48 @@ in
         --key LineSmoothingDistanceMax 50
     '';
   };
+
+  # Keep the main UI out of the way while drawing. The standard popup palette
+  # and Docker Box provide touch-friendly access to frequently used controls.
+  home-manager.users.masato.home.activation.kritaPopupPalette = {
+    after = [ "writeBoundary" ];
+    before = [ ];
+    data = ''
+      config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}"
+      kritarc="$config_dir/kritarc"
+      kritashortcutsrc="$config_dir/kritashortcutsrc"
+      input_dir="$HOME/.local/share/krita/input"
+      input_profile="$input_dir/kritadefault.profile"
+      kwriteconfig=${pkgs.kdePackages.kconfig}/bin/kwriteconfig6
+
+      run ${pkgs.coreutils}/bin/mkdir -p "$config_dir"
+      run ${pkgs.coreutils}/bin/mkdir -p "$input_dir"
+      run ${pkgs.coreutils}/bin/cp --no-clobber \
+        ${pkgs.krita}/share/krita/input/kritadefault.profile \
+        "$input_profile"
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key hideDockersFullScreen --type bool true
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key showBrushHud --type bool true
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key "popuppalette/dockerList" KisLayerBox
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key "popuppalette/currentDocker" KisLayerBox
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key "toolbar/dockerList" \
+        "BrushHudDocker,PresetDocker,ColorSelectorNg,KisLayerBox"
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key "toolbar/currentDocker" BrushHudDocker
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key "dockerBox/dockerList" --delete ""
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key "dockerBox/currentDocker" --delete ""
+      run "$kwriteconfig" --file "$kritashortcutsrc" \
+        --group Shortcuts --key docker_box "Meta+F12"
+      run "$kwriteconfig" --file "$input_profile" \
+        --group "Show Popup Widget" --key 1 --delete ""
+      run "$kwriteconfig" --file "$input_profile" \
+        --group "Show Popup Widget" --key 2 --delete ""
+    '';
+  };
 }
