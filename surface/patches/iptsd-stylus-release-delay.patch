@@ -1,0 +1,112 @@
+diff --git a/etc/iptsd.conf b/etc/iptsd.conf
+index 1d29c95..2a3f36f 100644
+--- a/etc/iptsd.conf
++++ b/etc/iptsd.conf
+@@ -24,6 +24,13 @@
+ ##
+ # DisableOnStylus = false
+ 
++##
++## How long to keep the touchscreen disabled after the stylus leaves proximity.
++## This prevents palm contacts from leaking through just before the stylus is
++## detected again. Unit: milliseconds.
++##
++# StylusReleaseDelay = 0
++
+ ##
+ ## How many centimeters a contact can be outside of the screen and still get registered.
+ ##
+diff --git a/src/apps/daemon/daemon.hpp b/src/apps/daemon/daemon.hpp
+index 1f0c080..8a9256e 100644
+--- a/src/apps/daemon/daemon.hpp
++++ b/src/apps/daemon/daemon.hpp
+@@ -4,8 +4,9 @@
+ #define IPTSD_APPS_DAEMON_DAEMON_HPP
+ 
+ #include "stylus.hpp"
+ #include "touch.hpp"
+ 
++#include <common/chrono.hpp>
+ #include <common/types.hpp>
+ #include <contacts/contact.hpp>
+ #include <core/generic/application.hpp>
+@@ -16,5 +17,6 @@
+ #include <spdlog/spdlog.h>
+ 
++#include <optional>
+ #include <vector>
+ 
+ namespace iptsd::apps::daemon {
+@@ -27,6 +29,15 @@ private:
+ 	// The stylus device.
+ 	std::optional<StylusDevice> m_stylus = std::nullopt;
+ 
++	// Monotonic clock used for the post-stylus touchscreen holdoff.
++	using clock = chrono::steady_clock;
++
++	// Whether the last stylus sample reported proximity.
++	bool m_stylus_in_proximity = false;
++
++	// When the stylus most recently left proximity.
++	std::optional<clock::time_point> m_stylus_released_at = std::nullopt;
++
+ public:
+ 	Daemon(const core::Config &config, const core::DeviceInfo &info)
+ 		: core::Application(config, info)
+@@ -61,7 +72,15 @@ public:
+ 
+ 		// Enable the touchscreen if it was disabled by a stylus that is no longer active.
+ 		if (m_config.touchscreen_disable_on_stylus && m_stylus.has_value()) {
+-			if (!m_stylus->active() && !m_touch->enabled())
++			const milliseconds<usize> release_delay {
++				m_config.touchscreen_stylus_release_delay
++			};
++			const bool release_delay_elapsed =
++				!m_stylus_released_at.has_value() ||
++				clock::now() - *m_stylus_released_at >= release_delay;
++
++			if (!m_stylus_in_proximity && !m_touch->enabled() &&
++			    release_delay_elapsed)
+ 				m_touch->enable();
+ 		}
+ 
+@@ -85,7 +104,15 @@ public:
+ 			if (m_touch->enabled())
+ 				m_touch->disable();
+ 		}
+ 
++		if (m_stylus_in_proximity && !stylus.proximity)
++			m_stylus_released_at = clock::now();
++
++		if (stylus.proximity)
++			m_stylus_released_at.reset();
++
++		m_stylus_in_proximity = stylus.proximity;
++
+ 		m_stylus->update(stylus);
+ 	}
+ };
+diff --git a/src/core/generic/config.hpp b/src/core/generic/config.hpp
+index b9b0254..1e39e57 100644
+--- a/src/core/generic/config.hpp
++++ b/src/core/generic/config.hpp
+@@ -28,6 +28,7 @@ public:
+ 	bool touchscreen_disable = false;
+ 	bool touchscreen_disable_on_palm = false;
+ 	bool touchscreen_disable_on_stylus = false;
++	usize touchscreen_stylus_release_delay = 0;
+ 	f64 touchscreen_overshoot = 0.5;
+ 
+ 	// [Touchpad]
+diff --git a/src/core/linux/config-loader.hpp b/src/core/linux/config-loader.hpp
+index 78ffb85..31a120d 100644
+--- a/src/core/linux/config-loader.hpp
++++ b/src/core/linux/config-loader.hpp
+@@ -155,6 +155,7 @@ private:
+ 		this->get(ini, "Touchscreen", "Disable", m_config.touchscreen_disable);
+ 		this->get(ini, "Touchscreen", "DisableOnPalm", m_config.touchscreen_disable_on_palm);
+ 		this->get(ini, "Touchscreen", "DisableOnStylus", m_config.touchscreen_disable_on_stylus);
++		this->get(ini, "Touchscreen", "StylusReleaseDelay", m_config.touchscreen_stylus_release_delay);
+ 		this->get(ini, "Touchscreen", "Overshoot", m_config.touchscreen_overshoot);
+ 
+ 		this->get(ini, "Touchpad", "Disable", m_config.touchpad_disable);

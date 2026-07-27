@@ -107,11 +107,21 @@ in
   hardware.enableRedistributableFirmware = true;
   hardware.graphics.enable = true;
   hardware.sensor.iio.enable = true;
+  nixpkgs.overlays = [
+    (_final: prev: {
+      iptsd = prev.iptsd.overrideAttrs (oldAttrs: {
+        patches = (oldAttrs.patches or [ ]) ++ [
+          ./patches/iptsd-stylus-release-delay.patch
+        ];
+      });
+    })
+  ];
   services.iptsd = {
     enable = true;
     config.Touchscreen = {
       DisableOnPalm = true;
       DisableOnStylus = true;
+      StylusReleaseDelay = 300;
     };
   };
   services.thermald.enable = true;
