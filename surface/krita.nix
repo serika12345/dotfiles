@@ -67,6 +67,14 @@ in
       run "$kwriteconfig" --file "$kritarc" --group "<default>" \
         --key showBrushHud --type bool true
       run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key KineticScrollingEnabled --type bool true
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key KineticScrollingGesture --type int 1
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key KineticScrollingSensitivity --type int 75
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
+        --key KineticScrollingHideScrollbar --type bool false
+      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
         --key "popuppalette/dockerList" KisLayerBox
       run "$kwriteconfig" --file "$kritarc" --group "<default>" \
         --key "popuppalette/currentDocker" KisLayerBox
