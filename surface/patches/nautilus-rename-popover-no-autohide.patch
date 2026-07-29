@@ -1,0 +1,12 @@
+diff --git a/src/nautilus-rename-file-popover.c b/src/nautilus-rename-file-popover.c
+index 07d829f0d..cc71cba5a 100644
+--- a/src/nautilus-rename-file-popover.c
++++ b/src/nautilus-rename-file-popover.c
+@@ -262,6 +262,7 @@ nautilus_rename_file_popover_init (NautilusRenameFilePopover *self)
+ {
+     g_type_ensure (NAUTILUS_TYPE_FILENAME_VALIDATOR);
+     gtk_widget_init_template (GTK_WIDGET (self));
++    gtk_popover_set_autohide (GTK_POPOVER (self), FALSE);
+ }
+ 
+ static void

@@ -23,6 +23,15 @@ in
           ./patches/mutter-hide-tablet-cursor.patch
         ];
       });
+
+      # Mutter currently treats OSK touches as outside clicks and dismisses
+      # Nautilus' grabbed inline rename popover (GNOME/mutter#4362). Keeping
+      # this one popover non-autohiding lets OSK text input remain active.
+      nautilus = prev.nautilus.overrideAttrs (oldAttrs: {
+        patches = (oldAttrs.patches or [ ]) ++ [
+          ./patches/nautilus-rename-popover-no-autohide.patch
+        ];
+      });
     })
   ];
 
