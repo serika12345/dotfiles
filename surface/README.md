@@ -90,6 +90,17 @@ systemctl --user restart rclone-protondrive.service
 journalctl --user -u rclone-protondrive.service -f
 ```
 
+ディレクトリ一覧は1時間キャッシュします。rcloneマウント経由の変更は即座に反映されますが、
+Webやスマートフォンなど別クライアントによる変更は、キャッシュが切れるまで表示されない
+場合があります。また、Nautilusのファイル種別・アイコン判定による再ダウンロードを避ける
+ため、読み取ったファイル内容を最大10 GiB、最終アクセスから24時間キャッシュします。再度
+開いた際にProton Driveへハッシュを問い合わせないよう、高速fingerprintも使用します。
+ディレクトリ一覧をすぐに再取得する場合は次を実行します。
+
+```console
+systemctl --user kill --signal=HUP rclone-protondrive.service
+```
+
 <!-- TODO: nixpkgsがMutter 50.3以降になったら互換パッチとこの説明を削除する。 -->
 GNOME 50.2のMutterはtext-input-v3のversion 2を実装した際、version 1クライアントが
 画面キーボードを再表示するために使っていた互換動作を削除しました。GTK 4.22はまだ

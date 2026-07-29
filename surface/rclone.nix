@@ -91,7 +91,7 @@ in
           waitForSynchronizedClock
           "${pkgs.coreutils}/bin/mkdir -p %h/${protonDriveMount} ${rcloneCacheDir}"
         ];
-        ExecStart = "${pkgs.rclone}/bin/rclone mount ${protonDriveRemote}: %h/${protonDriveMount} --config=${rcloneConfig} --cache-dir=${rcloneCacheDir} --vfs-cache-mode=writes --protondrive-enable-caching=false";
+        ExecStart = "${pkgs.rclone}/bin/rclone mount ${protonDriveRemote}: %h/${protonDriveMount} --config=${rcloneConfig} --cache-dir=${rcloneCacheDir} --vfs-cache-mode=full --vfs-fast-fingerprint --vfs-cache-max-size=10G --vfs-cache-max-age=24h --dir-cache-time=1h --poll-interval=0 --protondrive-enable-caching=false";
         ExecStop = "/run/wrappers/bin/fusermount3 -uz %h/${protonDriveMount}";
         Restart = "on-failure";
         RestartSec = "10s";
