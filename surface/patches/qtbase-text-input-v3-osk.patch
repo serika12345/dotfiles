@@ -1,0 +1,37 @@
+diff --git a/src/plugins/platforms/wayland/qwaylandtextinputv3.cpp b/src/plugins/platforms/wayland/qwaylandtextinputv3.cpp
+index 1fc98ae14d..ab78490c24 100644
+--- a/src/plugins/platforms/wayland/qwaylandtextinputv3.cpp
++++ b/src/plugins/platforms/wayland/qwaylandtextinputv3.cpp
+@@ -398,6 +398,20 @@ void QWaylandTextInputv3::updateState(Qt::InputMethodQueries queries, uint32_t f
+         commit();
+ }
+ 
++void QWaylandTextInputv3::showInputPanel()
++{
++    qCDebug(qLcQpaWaylandTextInput) << Q_FUNC_INFO;
++
++    /*
++     * Version 1 of text-input-v3 has no explicit show-input-panel request.
++     * Mutter treats a repeated enable as that request for version 1 clients.
++     */
++    if (m_surface) {
++        enable();
++        commit();
++    }
++}
++
+ void QWaylandTextInputv3::setCursorInsidePreedit(int cursor)
+ {
+     Q_UNUSED(cursor);
+diff --git a/src/plugins/platforms/wayland/qwaylandtextinputv3_p.h b/src/plugins/platforms/wayland/qwaylandtextinputv3_p.h
+index fb33acf5b7..ac230972dd 100644
+--- a/src/plugins/platforms/wayland/qwaylandtextinputv3_p.h
++++ b/src/plugins/platforms/wayland/qwaylandtextinputv3_p.h
+@@ -39,6 +39,7 @@ public:
+     void reset() override;
+     void commit() override;
+     void updateState(Qt::InputMethodQueries queries, uint32_t flags) override;
++    void showInputPanel() override;
+     // TODO: not supported yet
+     void setCursorInsidePreedit(int cursor) override;
+ 

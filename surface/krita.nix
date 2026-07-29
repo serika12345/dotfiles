@@ -1,6 +1,15 @@
 { pkgs, ... }:
 
 let
+  # Qt's text-input-v3 version 1 backend leaves showInputPanel() empty. Patch
+  # the Qt Wayland client used by Krita so a touchscreen tap repeats enable,
+  # which Mutter interprets as a request to show the on-screen keyboard.
+  kritaQtbase = pkgs.qt6.qtbase.overrideAttrs (oldAttrs: {
+    patches = (oldAttrs.patches or [ ]) ++ [
+      ./patches/qtbase-text-input-v3-osk.patch
+    ];
+  });
+
   applyKritaConfig = pkgs.writeShellScript "apply-krita-config" ''
     set -eu
 
@@ -71,6 +80,7 @@ let
     postBuild = ''
       wrapProgram "$out/bin/krita" \
         --set QT_QPA_PLATFORM wayland \
+        --prefix LD_LIBRARY_PATH : "${kritaQtbase}/lib" \
         --run ${applyKritaConfig}
     '';
   };
