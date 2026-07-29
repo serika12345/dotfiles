@@ -24,6 +24,13 @@ let
       --key LineSmoothingDistanceMin 3
     "$kwriteconfig" --file "$kritarc" --group "<default>" \
       --key LineSmoothingDistanceMax 50
+    # A4 at 300 ppi in landscape orientation.
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key imageWidthDef --type int 3508
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key imageHeightDef --type int 2480
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key imageResolutionDef 300
     "$kwriteconfig" --file "$kritarc" --group "<default>" \
       --key hideDockersFullScreen --type bool true
     "$kwriteconfig" --file "$kritarc" --group "<default>" \
