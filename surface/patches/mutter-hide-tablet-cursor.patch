@@ -1,8 +1,21 @@
 diff --git a/src/backends/meta-backend.c b/src/backends/meta-backend.c
-index 8bb5e0e..2c1d2ce 100644
+index 8bb5e0e..d9d95a3 100644
 --- a/src/backends/meta-backend.c
 +++ b/src/backends/meta-backend.c
-@@ -1104,8 +1104,7 @@ update_pointer_visibility_from_event (MetaBackend  *backend,
+@@ -1086,3 +1086,12 @@ update_pointer_visibility_from_event (MetaBackend  *backend,
++  if (event_type == CLUTTER_TOUCH_BEGIN ||
++      event_type == CLUTTER_TOUCH_UPDATE ||
++      event_type == CLUTTER_TOUCH_END ||
++      event_type == CLUTTER_TOUCH_CANCEL)
++    {
++      set_cursor_visible (backend, FALSE);
++      return;
++    }
++
+   device = clutter_event_get_source_device (event);
+   if (!device)
+     return;
+@@ -1104,8 +1113,7 @@ update_pointer_visibility_from_event (MetaBackend  *backend,
      case CLUTTER_PEN_DEVICE:
      case CLUTTER_ERASER_DEVICE:
      case CLUTTER_CURSOR_DEVICE:

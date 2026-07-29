@@ -18,8 +18,9 @@ in
       mutter = prev.mutter.overrideAttrs (oldAttrs: {
         patches = (oldAttrs.patches or [ ]) ++ [
           ./patches/mutter-text-input-v1-osk.patch
-          # Drawing apps render their own brush outline; suppress Mutter's
-          # separate tablet-tool cursor so it does not overlap that outline.
+          # Hide the mouse pointer as soon as touchscreen or stylus input is
+          # used. Also suppress the separate tablet-tool cursor, since drawing
+          # apps render their own brush outline.
           ./patches/mutter-hide-tablet-cursor.patch
         ];
       });
