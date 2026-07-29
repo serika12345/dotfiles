@@ -1,12 +1,70 @@
 { pkgs, ... }:
 
 let
+  applyKritaConfig = pkgs.writeShellScript "apply-krita-config" ''
+    set -eu
+
+    config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}"
+    kritarc="$config_dir/kritarc"
+    kritashortcutsrc="$config_dir/kritashortcutsrc"
+    input_dir="$HOME/.local/share/krita/input"
+    input_profile="$input_dir/kritadefault.profile"
+    kwriteconfig=${pkgs.kdePackages.kconfig}/bin/kwriteconfig6
+
+    ${pkgs.coreutils}/bin/mkdir -p "$config_dir" "$input_dir"
+    ${pkgs.coreutils}/bin/cp --no-clobber \
+      ${pkgs.krita}/share/krita/input/kritadefault.profile \
+      "$input_profile"
+
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key LineSmoothingType 3
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key LineSmoothingDistanceKeepAspectRatio --type bool false
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key LineSmoothingDistanceMin 3
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key LineSmoothingDistanceMax 50
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key hideDockersFullScreen --type bool true
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key showBrushHud --type bool true
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key KineticScrollingEnabled --type bool true
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key KineticScrollingGesture --type int 1
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key KineticScrollingSensitivity --type int 75
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key KineticScrollingHideScrollbar --type bool false
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key "popuppalette/dockerList" KisLayerBox
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key "popuppalette/currentDocker" KisLayerBox
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key "toolbar/dockerList" \
+      "BrushHudDocker,PresetDocker,ColorSelectorNg,KisLayerBox"
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key "toolbar/currentDocker" BrushHudDocker
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key "dockerBox/dockerList" --delete ""
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key "dockerBox/currentDocker" --delete ""
+    "$kwriteconfig" --file "$kritashortcutsrc" \
+      --group Shortcuts --key docker_box "Meta+F12"
+    "$kwriteconfig" --file "$input_profile" \
+      --group "Show Popup Widget" --key 1 --delete ""
+    "$kwriteconfig" --file "$input_profile" \
+      --group "Show Popup Widget" --key 2 --delete ""
+  '';
+
   kritaWayland = pkgs.symlinkJoin {
     name = "krita-wayland";
     paths = [ pkgs.krita ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
-      wrapProgram "$out/bin/krita" --set QT_QPA_PLATFORM wayland
+      wrapProgram "$out/bin/krita" \
+        --set QT_QPA_PLATFORM wayland \
+        --run ${applyKritaConfig}
     '';
   };
 in
@@ -21,78 +79,15 @@ in
      KEYBOARD_KEY_7006f=f12
   '';
 
-  # Keep Krita's brush smoothing defaults reproducible without managing the
-  # entire mutable kritarc file. In Krita's config, DistanceMin is the sample
-  # count at maximum speed and DistanceMax is the count at minimum speed.
-  home-manager.users.masato.home.activation.kritaBrushSmoothing = {
+  # Krita keeps its configuration in memory and writes it back when it exits.
+  # Apply the managed keys both during a switch and immediately before launch,
+  # so a Krita instance that was open during the switch cannot permanently
+  # overwrite them with its previously loaded values.
+  home-manager.users.masato.home.activation.kritaConfig = {
     after = [ "writeBoundary" ];
     before = [ ];
     data = ''
-      config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}"
-      kritarc="$config_dir/kritarc"
-      kwriteconfig=${pkgs.kdePackages.kconfig}/bin/kwriteconfig6
-
-      run ${pkgs.coreutils}/bin/mkdir -p "$config_dir"
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key LineSmoothingType 3
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key LineSmoothingDistanceKeepAspectRatio --type bool false
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key LineSmoothingDistanceMin 3
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key LineSmoothingDistanceMax 50
-    '';
-  };
-
-  # Keep the main UI out of the way while drawing. The standard popup palette
-  # and Docker Box provide touch-friendly access to frequently used controls.
-  home-manager.users.masato.home.activation.kritaPopupPalette = {
-    after = [ "writeBoundary" ];
-    before = [ ];
-    data = ''
-      config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}"
-      kritarc="$config_dir/kritarc"
-      kritashortcutsrc="$config_dir/kritashortcutsrc"
-      input_dir="$HOME/.local/share/krita/input"
-      input_profile="$input_dir/kritadefault.profile"
-      kwriteconfig=${pkgs.kdePackages.kconfig}/bin/kwriteconfig6
-
-      run ${pkgs.coreutils}/bin/mkdir -p "$config_dir"
-      run ${pkgs.coreutils}/bin/mkdir -p "$input_dir"
-      run ${pkgs.coreutils}/bin/cp --no-clobber \
-        ${pkgs.krita}/share/krita/input/kritadefault.profile \
-        "$input_profile"
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key hideDockersFullScreen --type bool true
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key showBrushHud --type bool true
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key KineticScrollingEnabled --type bool true
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key KineticScrollingGesture --type int 1
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key KineticScrollingSensitivity --type int 75
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key KineticScrollingHideScrollbar --type bool false
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key "popuppalette/dockerList" KisLayerBox
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key "popuppalette/currentDocker" KisLayerBox
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key "toolbar/dockerList" \
-        "BrushHudDocker,PresetDocker,ColorSelectorNg,KisLayerBox"
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key "toolbar/currentDocker" BrushHudDocker
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key "dockerBox/dockerList" --delete ""
-      run "$kwriteconfig" --file "$kritarc" --group "<default>" \
-        --key "dockerBox/currentDocker" --delete ""
-      run "$kwriteconfig" --file "$kritashortcutsrc" \
-        --group Shortcuts --key docker_box "Meta+F12"
-      run "$kwriteconfig" --file "$input_profile" \
-        --group "Show Popup Widget" --key 1 --delete ""
-      run "$kwriteconfig" --file "$input_profile" \
-        --group "Show Popup Widget" --key 2 --delete ""
+      run ${applyKritaConfig}
     '';
   };
 }
