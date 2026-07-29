@@ -60,6 +60,34 @@ let
       esac
     '';
   };
+  restartGsconnectAfterResume = pkgs.writeShellApplication {
+    name = "restart-gsconnect-after-resume";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.glib
+      pkgs.gnugrep
+      pkgs.systemd
+    ];
+    text = ''
+      # Give iptsd time to recreate its virtual input devices after resume.
+      sleep 2
+
+      runtime_dir="/run/user/$(id -u)"
+      if [ ! -S "$runtime_dir/bus" ]; then
+        exit 0
+      fi
+
+      export XDG_RUNTIME_DIR="$runtime_dir"
+      export DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime_dir/bus"
+
+      # Do not D-Bus-activate GSConnect when there is no graphical session.
+      if busctl --user --no-pager --no-legend list |
+        grep '^org\.gnome\.Shell\.Extensions\.GSConnect ' >/dev/null
+      then
+        gapplication action org.gnome.Shell.Extensions.GSConnect quit
+      fi
+    '';
+  };
 in
 {
   imports = [
@@ -67,6 +95,7 @@ in
     ./desktop.nix
     ./krita.nix
     ./rclone.nix
+    ./staged-suspend.nix
   ];
 
   boot.loader.systemd-boot = {
@@ -133,9 +162,9 @@ in
     };
   };
 
-  # GNOME normally handles the button while a session is active. Keep logind
-  # as a fallback for GDM, TTY sessions, or when GNOME is not running.
-  services.logind.settings.Login.HandlePowerKey = "suspend";
+  # keyd routes the physical power button through staged-suspend.nix. Ignoring
+  # it here prevents a second immediate suspend request from racing the timer.
+  services.logind.settings.Login.HandlePowerKey = "ignore";
 
   time.timeZone = "Asia/Tokyo";
   i18n.defaultLocale = "en_US.UTF-8";
@@ -277,6 +306,27 @@ in
       ExecStart = "${sshSuspendInhibitor}/bin/ssh-suspend-inhibitor";
       Restart = "always";
       RestartSec = 1;
+    };
+  };
+
+  # iptsd recreates its virtual touchscreen on resume. A long-running GTK 3
+  # GSConnect process can retain the stale touch device, so restart it only
+  # after the system has fully left the sleep transaction.
+  systemd.services.restart-gsconnect-after-resume = {
+    description = "Restart GSConnect after resume";
+    wantedBy = [ "sleep.target" ];
+    before = [ "sleep.target" ];
+    unitConfig = {
+      DefaultDependencies = false;
+      StopWhenUnneeded = true;
+    };
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      User = "masato";
+      ExecStart = "${pkgs.coreutils}/bin/true";
+      ExecStop = "${restartGsconnectAfterResume}/bin/restart-gsconnect-after-resume";
+      TimeoutStopSec = 15;
     };
   };
 

@@ -9,6 +9,19 @@ let
   protonDriveMount = "ProtonDrive";
   rcloneConfig = "%h/.config/rclone/rclone.conf";
   rcloneCacheDir = "%h/.cache/rclone/${protonDriveRemote}";
+  waitForSynchronizedClock = pkgs.writeShellScript "wait-for-synchronized-clock" ''
+    for _attempt in $(${pkgs.coreutils}/bin/seq 1 60); do
+      if
+        [ "$(${pkgs.systemd}/bin/timedatectl show --property=NTPSynchronized --value)" = yes ]
+      then
+        exit 0
+      fi
+      ${pkgs.coreutils}/bin/sleep 1
+    done
+
+    echo "Timed out waiting for the system clock to synchronize" >&2
+    exit 1
+  '';
   scanHome = pkgs.writeShellScriptBin "scanhome" ''
     set -euo pipefail
 
@@ -74,11 +87,16 @@ in
           "PATH=/run/wrappers/bin:${lib.makeBinPath [ pkgs.fuse3 ]}"
         ];
         ExecCondition = "${pkgs.gnugrep}/bin/grep -Fxq '[${protonDriveRemote}]' ${rcloneConfig}";
-        ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/${protonDriveMount} ${rcloneCacheDir}";
+        ExecStartPre = [
+          waitForSynchronizedClock
+          "${pkgs.coreutils}/bin/mkdir -p %h/${protonDriveMount} ${rcloneCacheDir}"
+        ];
         ExecStart = "${pkgs.rclone}/bin/rclone mount ${protonDriveRemote}: %h/${protonDriveMount} --config=${rcloneConfig} --cache-dir=${rcloneCacheDir} --vfs-cache-mode=writes --protondrive-enable-caching=false";
         ExecStop = "/run/wrappers/bin/fusermount3 -uz %h/${protonDriveMount}";
         Restart = "on-failure";
         RestartSec = "10s";
+        TimeoutStartSec = "90s";
+        TimeoutStopSec = "5s";
       };
 
       Install.WantedBy = [ "default.target" ];

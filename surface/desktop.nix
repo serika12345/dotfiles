@@ -229,8 +229,9 @@ in
       ambient-enabled = false;
       # Settings > Power > Automatic Power Saver
       power-saver-profile-on-low-battery = false;
-      # Suspend when the physical power button is pressed.
-      power-button-action = "suspend";
+      # keyd owns the physical power button and stages suspend after blanking
+      # the display. Do not let GNOME submit a second suspend request.
+      power-button-action = "nothing";
       # Settings > Power > Automatic Suspend > When Plugged In
       sleep-inactive-ac-type = "nothing";
     };
