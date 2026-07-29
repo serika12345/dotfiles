@@ -16,6 +16,7 @@
           final.callPackage "${self}/pkgs/xjadeo/package.nix" { }
         else
           prev.xjadeo;
+      proton-drive-cli = final.callPackage "${self}/pkgs/proton-drive-cli/package.nix" { };
       ghidra =
         if prev.stdenv.hostPlatform.isDarwin then
           final.symlinkJoin {
@@ -60,6 +61,7 @@
     xjadeo
     furnace
     ghidra
+    proton-drive-cli
   ];
 
   # Necessary for using flakes on this system.
