@@ -141,6 +141,7 @@ in
   ];
   services.iptsd = {
     enable = true;
+    config.Stylus.TipDistance = 0.1436;
     config.Touchscreen = {
       DisableOnPalm = true;
       DisableOnStylus = true;

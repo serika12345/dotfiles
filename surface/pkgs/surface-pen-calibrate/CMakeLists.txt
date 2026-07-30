@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(surface-pen-calibrate VERSION 0.2.0 LANGUAGES CXX)
+project(surface-pen-calibrate VERSION 0.3.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -29,7 +29,9 @@ target_compile_definitions(surface-pen-calibrate PRIVATE
 install(TARGETS surface-pen-calibrate
   RUNTIME DESTINATION bin
 )
-install(FILES surface-pen-calibrate.desktop
+install(FILES
+  surface-pen-calibrate.desktop
+  surface-pen-tip-distance.desktop
   DESTINATION share/applications
 )
 

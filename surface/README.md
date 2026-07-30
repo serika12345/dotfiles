@@ -88,6 +88,24 @@ GNOME 50のタブレット入力経路では2回目以降のペンイベント�
 `~/.config/surface-pen-calibration/last-matrix`にも保存されます。永続的な実データは
 `/var/lib`に置かれるため、NixOSの再構築後も維持されます。
 
+ペンを斜めにしたときだけペン先とカーソルがずれる場合は、アプリ一覧から
+「Surface Pen 傾斜補正値の測定」を開きます。画面中央のターゲットへ、表示された
+方向にペン軸を15度以上傾けて8回タップすると、IPTSDの`TipDistance`を算出します。
+測定ではIPTSDが出力する`ABS_TILT_X`、`ABS_TILT_Y`と入力デバイスの物理解像度を使い、
+左右・上下を組にして既存の位置補正に残る一定のずれを除外します。
+
+このモードは設定を自動変更しません。測定完了後に画面をタップするか`Enter`を押すと、
+次の形式のNix設定行をクリップボードへコピーします。
+
+```nix
+services.iptsd.config.Stylus.TipDistance = 0.0000;
+```
+
+表示された値へ置き換えた行を`configuration.nix`へ追加し、
+`sudo nixos-rebuild switch --flake .#surface`で反映します。`TipDistance`の単位はcmです。
+すでに`/etc/iptsd.conf`へ値が設定されている場合は、その現在値も読み取ったうえで
+追加補正量を算出します。
+
 ## Proton Drive
 
 この構成ではrcloneのProton Drive backendを使います。認証情報はNixでは管理せず、

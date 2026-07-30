@@ -1,6 +1,7 @@
 #include "calibration.h"
 
 #include <QApplication>
+#include <QClipboard>
 #include <QCommandLineParser>
 #include <QCursor>
 #include <QDir>
@@ -11,6 +12,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QSaveFile>
 #include <QScreen>
 #include <QSocketNotifier>
@@ -57,6 +59,29 @@ constexpr std::array targets {
   calibration::Point {0.10, 0.50},
 };
 
+enum class Mode {
+  Position,
+  TipDistance,
+};
+
+enum class TiltDirection {
+  Left,
+  Right,
+  Up,
+  Down,
+};
+
+constexpr std::array tilt_directions {
+  TiltDirection::Left,
+  TiltDirection::Right,
+  TiltDirection::Up,
+  TiltDirection::Down,
+  TiltDirection::Left,
+  TiltDirection::Right,
+  TiltDirection::Up,
+  TiltDirection::Down,
+};
+
 QString matrix_text(const calibration::Matrix &matrix)
 {
   QStringList values;
@@ -66,12 +91,90 @@ QString matrix_text(const calibration::Matrix &matrix)
   return values.join(u' ');
 }
 
+calibration::Matrix read_position_matrix()
+{
+  QFile file(QStringLiteral("/var/lib/surface-pen-calibration/matrix"));
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    return {};
+  }
+
+  const QStringList values =
+    QString::fromUtf8(file.readAll())
+      .split(QRegularExpression(QStringLiteral("\\s+")),
+             Qt::SkipEmptyParts);
+  if (values.size() != 6) {
+    return {};
+  }
+
+  std::array<double, 6> parsed {};
+  for (qsizetype index = 0; index < values.size(); ++index) {
+    bool valid = false;
+    parsed[static_cast<std::size_t>(index)] =
+      values[index].toDouble(&valid);
+    if (!valid ||
+        !std::isfinite(parsed[static_cast<std::size_t>(index)])) {
+      return {};
+    }
+  }
+
+  return {
+    .a = parsed[0],
+    .b = parsed[1],
+    .c = parsed[2],
+    .d = parsed[3],
+    .e = parsed[4],
+    .f = parsed[5],
+  };
+}
+
+double read_current_tip_distance()
+{
+  QFile file(QStringLiteral("/etc/iptsd.conf"));
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    return 0.0;
+  }
+
+  QTextStream input(&file);
+  QString section;
+  while (!input.atEnd()) {
+    const QString line = input.readLine().trimmed();
+    if (line.startsWith(u'[') && line.endsWith(u']')) {
+      section = line.sliced(1, line.size() - 2).trimmed();
+      continue;
+    }
+    if (section != QStringLiteral("Stylus") ||
+        line.startsWith(u'#') || line.startsWith(u';')) {
+      continue;
+    }
+
+    const qsizetype separator = line.indexOf(u'=');
+    if (separator < 0 ||
+        line.first(separator).trimmed() !=
+          QStringLiteral("TipDistance")) {
+      continue;
+    }
+
+    bool valid = false;
+    const double value =
+      line.sliced(separator + 1).trimmed().toDouble(&valid);
+    return valid && std::isfinite(value) ? value : 0.0;
+  }
+
+  return 0.0;
+}
+
 class CalibrationWindow final : public QWidget {
 public:
-  explicit CalibrationWindow(const bool allow_mouse)
-    : m_allow_mouse(allow_mouse)
+  explicit CalibrationWindow(const Mode mode, const bool allow_mouse)
+    : m_mode(mode),
+      m_allow_mouse(allow_mouse),
+      m_position_matrix(read_position_matrix()),
+      m_current_tip_distance(read_current_tip_distance())
   {
-    setWindowTitle(tr("Surface Pen Calibration"));
+    setWindowTitle(
+      m_mode == Mode::TipDistance
+        ? tr("Surface Pen TipDistance Measurement")
+        : tr("Surface Pen Calibration"));
     setAttribute(Qt::WA_AcceptTouchEvents, false);
     setFocusPolicy(Qt::StrongFocus);
     setCursor(Qt::BlankCursor);
@@ -169,7 +272,9 @@ protected:
     }
 
     if (m_phase == Phase::Calibrating) {
-      add_measurement(event->position());
+      if (m_mode == Mode::Position) {
+        add_measurement(event->position());
+      }
     }
   }
 
@@ -180,8 +285,16 @@ protected:
       close();
       break;
     case Qt::Key_Backspace:
-      if (m_phase == Phase::Calibrating && !m_measured.empty()) {
-        m_measured.pop_back();
+      if (m_phase == Phase::Calibrating &&
+          (m_mode == Mode::Position
+             ? !m_measured.empty()
+             : !m_tip_samples.empty())) {
+        if (m_mode == Mode::Position) {
+          m_measured.pop_back();
+        } else {
+          m_tip_samples.pop_back();
+          m_tilt_warning.clear();
+        }
         update();
       }
       break;
@@ -189,7 +302,9 @@ protected:
       restart();
       break;
     case Qt::Key_D:
-      reset_calibration();
+      if (m_mode == Mode::Position) {
+        reset_calibration();
+      }
       break;
     case Qt::Key_Return:
     case Qt::Key_Enter:
@@ -217,6 +332,21 @@ private:
       point.x * static_cast<double>(size.width()),
       point.y * static_cast<double>(size.height()),
     };
+  }
+
+  static QString tilt_direction_text(const TiltDirection direction)
+  {
+    switch (direction) {
+    case TiltDirection::Left:
+      return tr("左");
+    case TiltDirection::Right:
+      return tr("右");
+    case TiltDirection::Up:
+      return tr("上");
+    case TiltDirection::Down:
+      return tr("下");
+    }
+    return {};
   }
 
   bool open_stylus()
@@ -250,6 +380,8 @@ private:
 
       input_absinfo horizontal {};
       input_absinfo vertical {};
+      input_absinfo tilt_horizontal {};
+      input_absinfo tilt_vertical {};
       if (::ioctl(descriptor, EVIOCGABS(ABS_X), &horizontal) < 0 ||
           ::ioctl(descriptor, EVIOCGABS(ABS_Y), &vertical) < 0 ||
           horizontal.maximum <= horizontal.minimum ||
@@ -257,6 +389,21 @@ private:
         m_device_error =
           tr("%1の座標範囲を取得できません: %2")
             .arg(path, QString::fromLocal8Bit(std::strerror(errno)));
+        ::close(descriptor);
+        return false;
+      }
+      if (m_mode == Mode::TipDistance &&
+          (::ioctl(descriptor,
+                   EVIOCGABS(ABS_TILT_X),
+                   &tilt_horizontal) < 0 ||
+           ::ioctl(descriptor,
+                   EVIOCGABS(ABS_TILT_Y),
+                   &tilt_vertical) < 0 ||
+           horizontal.resolution <= 0 ||
+           vertical.resolution <= 0)) {
+        m_device_error =
+          tr("%1から傾斜または物理サイズ情報を取得できません。")
+            .arg(path);
         ::close(descriptor);
         return false;
       }
@@ -268,6 +415,18 @@ private:
       m_x_max = horizontal.maximum;
       m_y_min = vertical.minimum;
       m_y_max = vertical.maximum;
+      m_raw_tilt_x = tilt_horizontal.value;
+      m_raw_tilt_y = tilt_vertical.value;
+      if (m_mode == Mode::TipDistance) {
+        m_screen_width_cm =
+          static_cast<double>(horizontal.maximum -
+                              horizontal.minimum) /
+          static_cast<double>(horizontal.resolution) / 10.0;
+        m_screen_height_cm =
+          static_cast<double>(vertical.maximum -
+                              vertical.minimum) /
+          static_cast<double>(vertical.resolution) / 10.0;
+      }
       m_stylus_notifier =
         std::make_unique<QSocketNotifier>(m_stylus_fd,
                                           QSocketNotifier::Read,
@@ -319,6 +478,12 @@ private:
           m_raw_x = event.value;
         } else if (event.type == EV_ABS && event.code == ABS_Y) {
           m_raw_y = event.value;
+        } else if (event.type == EV_ABS &&
+                   event.code == ABS_TILT_X) {
+          m_raw_tilt_x = event.value;
+        } else if (event.type == EV_ABS &&
+                   event.code == ABS_TILT_Y) {
+          m_raw_tilt_y = event.value;
         } else if (event.type == EV_KEY &&
                    event.code == BTN_TOUCH &&
                    event.value == 1) {
@@ -345,18 +510,28 @@ private:
       const double normalized_y =
         static_cast<double>(m_raw_y - m_y_min) /
         static_cast<double>(m_y_max - m_y_min);
-      add_measurement(
-        {normalized_x * static_cast<double>(width()),
-         normalized_y * static_cast<double>(height())});
+      if (m_mode == Mode::Position) {
+        add_measurement(
+          {normalized_x * static_cast<double>(width()),
+           normalized_y * static_cast<double>(height())});
+      } else {
+        add_tip_measurement({normalized_x, normalized_y});
+      }
     } else if (m_phase == Phase::Complete ||
-               (m_phase == Phase::Error && m_result.has_value())) {
+               (m_phase == Phase::Error &&
+                (m_result.has_value() ||
+                 m_tip_result.has_value()))) {
       apply();
     }
   }
 
   void paint_calibration(QPainter &painter)
   {
-    const auto target = to_widget(targets[m_measured.size()], size());
+    const calibration::Point normalized_target =
+      m_mode == Mode::Position
+        ? targets[m_measured.size()]
+        : calibration::Point {0.5, 0.5};
+    const auto target = to_widget(normalized_target, size());
 
     QPen outer_pen(QColor(246, 248, 250), 5.0);
     painter.setPen(outer_pen);
@@ -378,7 +553,11 @@ private:
     painter.drawText(
       QRectF(0.0, 28.0, width(), 44.0),
       Qt::AlignHCenter | Qt::AlignTop,
-      tr("Surface Penでターゲットの中心をタップしてください"));
+      m_mode == Mode::Position
+        ? tr("Surface Penでターゲットの中心をタップしてください")
+        : tr("ペン軸を%1へ傾け、ターゲットの中心をタップしてください")
+            .arg(tilt_direction_text(
+              tilt_directions[m_tip_samples.size()])));
 
     QFont body_font = font();
     body_font.setPointSize(12);
@@ -388,8 +567,21 @@ private:
       QRectF(0.0, 78.0, width(), 32.0),
       Qt::AlignHCenter | Qt::AlignTop,
       tr("%1 / %2点  ·  Backspace: 1点戻る  ·  R: 最初から  ·  Esc: 終了")
-        .arg(m_measured.size() + 1)
-        .arg(targets.size()));
+        .arg((m_mode == Mode::Position
+                ? m_measured.size()
+                : m_tip_samples.size()) +
+             1)
+        .arg(m_mode == Mode::Position
+               ? targets.size()
+               : tilt_directions.size()));
+
+    if (!m_tilt_warning.isEmpty()) {
+      painter.setPen(QColor(255, 180, 80));
+      painter.drawText(
+        QRectF(80.0, height() - 100.0, width() - 160.0, 44.0),
+        Qt::AlignCenter | Qt::TextWordWrap,
+        m_tilt_warning);
+    }
   }
 
   void paint_result(QPainter &painter)
@@ -428,7 +620,7 @@ private:
     painter.setPen(QColor(190, 198, 208));
 
     QString details = m_message;
-    if (m_result.has_value()) {
+    if (m_mode == Mode::Position && m_result.has_value()) {
       details +=
         tr("\n\nRMS誤差: %1 px   最大誤差: %2 px"
            "\n\nlibinput行列:\n%3")
@@ -441,6 +633,21 @@ private:
                'f',
                2)
           .arg(matrix_text(m_final_matrix));
+    } else if (m_mode == Mode::TipDistance &&
+               m_tip_result.has_value()) {
+      details +=
+        tr("\n\n算出値: %1 cm"
+           "\n現在値: %2 cm   追加補正量: %3 cm"
+           "\nモデル適合RMS誤差: %4 px"
+           "\n\nservices.iptsd.config.Stylus.TipDistance = %1;")
+          .arg(m_calculated_tip_distance, 0, 'f', 4)
+          .arg(m_current_tip_distance, 0, 'f', 4)
+          .arg(m_tip_result->distance, 0, 'f', 4)
+          .arg(m_tip_result->rms_error *
+                 std::hypot(width(), height()),
+               0,
+               'f',
+               2);
     }
 
     painter.drawText(
@@ -456,16 +663,27 @@ private:
 
     QString action;
     if (m_phase == Phase::Complete) {
-      action = tr("画面をタップまたはEnterで適用（管理者認証）");
+      action =
+        m_mode == Mode::Position
+          ? tr("画面をタップまたはEnterで適用（管理者認証）")
+          : tr("画面をタップまたはEnterでNix設定行をコピー");
     } else if (m_phase == Phase::Applying) {
       action = tr("認証ダイアログを完了してください");
     } else if (m_phase == Phase::Applied) {
-      action = tr("R: 再測定  ·  D: 補正を初期化  ·  Esc: 終了");
-    } else if (m_result.has_value()) {
       action =
-        tr("画面をタップまたはEnterで再適用  ·  R: 再測定  ·  D: 初期化");
+        m_mode == Mode::Position
+          ? tr("R: 再測定  ·  D: 補正を初期化  ·  Esc: 終了")
+          : tr("設定行をコピーしました  ·  R: 再測定  ·  Esc: 終了");
+    } else if (m_result.has_value() || m_tip_result.has_value()) {
+      action =
+        m_mode == Mode::Position
+          ? tr("画面をタップまたはEnterで再適用  ·  R: 再測定  ·  D: 初期化")
+          : tr("画面をタップまたはEnterで設定行をコピー  ·  R: 再測定");
     } else {
-      action = tr("R: 再測定  ·  D: 補正を初期化  ·  Esc: 終了");
+      action =
+        m_mode == Mode::Position
+          ? tr("R: 再測定  ·  D: 補正を初期化  ·  Esc: 終了")
+          : tr("R: 再測定  ·  Esc: 終了");
     }
     painter.drawText(
       QRectF(80.0, height() * 0.75, width() - 160.0, 50.0),
@@ -504,6 +722,83 @@ private:
     update();
   }
 
+  void add_tip_measurement(const calibration::Point raw_position)
+  {
+    if (m_tip_samples.size() >= tilt_directions.size() ||
+        m_screen_width_cm <= 0.0 ||
+        m_screen_height_cm <= 0.0) {
+      return;
+    }
+
+    constexpr double pi = 3.14159265358979323846;
+    const double tilt_x =
+      static_cast<double>(m_raw_tilt_x) * pi / 18000.0;
+    const double tilt_y =
+      static_cast<double>(m_raw_tilt_y) * pi / 18000.0;
+    const double tangent_x = std::tan(tilt_x);
+    const double tangent_y = std::tan(tilt_y);
+    const double denominator =
+      std::sqrt(1.0 +
+                (tangent_x * tangent_x) +
+                (tangent_y * tangent_y));
+    const double tilt_degrees =
+      std::atan(std::hypot(tangent_x, tangent_y)) *
+      180.0 / pi;
+
+    if (!std::isfinite(tilt_degrees) || tilt_degrees < 15.0) {
+      m_tilt_warning =
+        tr("傾きが小さすぎます（%1°）。ペン軸を15°以上傾けて"
+           "同じ点をもう一度タップしてください。")
+          .arg(tilt_degrees, 0, 'f', 1);
+      update();
+      return;
+    }
+
+    const calibration::Point raw_correction_per_cm {
+      .x = -tangent_x / denominator / m_screen_width_cm,
+      .y = -tangent_y / denominator / m_screen_height_cm,
+    };
+    const calibration::Point mapped_correction_per_cm {
+      .x = (m_position_matrix.a * raw_correction_per_cm.x) +
+           (m_position_matrix.b * raw_correction_per_cm.y),
+      .y = (m_position_matrix.d * raw_correction_per_cm.x) +
+           (m_position_matrix.e * raw_correction_per_cm.y),
+    };
+
+    m_tip_samples.push_back({
+      .measured = m_position_matrix.map(raw_position),
+      .correction_per_cm = mapped_correction_per_cm,
+    });
+    m_tilt_warning.clear();
+
+    if (m_tip_samples.size() == tilt_directions.size()) {
+      try {
+        m_tip_result =
+          calibration::fit_tip_distance(m_tip_samples, {0.5, 0.5});
+        m_calculated_tip_distance =
+          m_current_tip_distance + m_tip_result->distance;
+        m_phase = Phase::Complete;
+
+        if (m_calculated_tip_distance < 0.0 ||
+            m_calculated_tip_distance > 3.0) {
+          m_message =
+            tr("測定値が通常想定される範囲（0〜3 cm）を外れています。"
+               "\nペン軸の向きとターゲット位置を確認して再測定してください。");
+        } else {
+          m_message =
+            tr("IPTSDのTipDistanceを算出しました。"
+               "\nこの画面では設定を変更しません。");
+        }
+      } catch (const std::exception &error) {
+        m_phase = Phase::Error;
+        m_message =
+          tr("TipDistanceを計算できませんでした: %1")
+            .arg(QString::fromUtf8(error.what()));
+      }
+    }
+    update();
+  }
+
   void save_user_copy() const
   {
     const QString directory =
@@ -524,6 +819,24 @@ private:
 
   void apply()
   {
+    if (m_mode == Mode::TipDistance) {
+      if (!m_tip_result.has_value() ||
+          (m_phase != Phase::Complete &&
+           m_phase != Phase::Applied &&
+           m_phase != Phase::Error)) {
+        return;
+      }
+      QApplication::clipboard()->setText(
+        QStringLiteral(
+          "services.iptsd.config.Stylus.TipDistance = %1;")
+          .arg(m_calculated_tip_distance, 0, 'f', 4));
+      m_phase = Phase::Applied;
+      m_message =
+        tr("Nix設定行をクリップボードへコピーしました。");
+      update();
+      return;
+    }
+
     if (m_phase == Phase::Applying || !m_result.has_value()) {
       return;
     }
@@ -563,24 +876,38 @@ private:
       return;
     }
     m_measured.clear();
+    m_tip_samples.clear();
     m_result.reset();
+    m_tip_result.reset();
+    m_tilt_warning.clear();
     m_phase = Phase::Calibrating;
     m_message.clear();
     update();
   }
 
+  Mode m_mode;
   bool m_allow_mouse;
   Phase m_phase = Phase::Calibrating;
   std::vector<calibration::Point> m_measured;
+  std::vector<calibration::TipSample> m_tip_samples;
   calibration::Matrix m_final_matrix;
+  calibration::Matrix m_position_matrix;
   std::optional<calibration::FitResult> m_result;
+  std::optional<calibration::TipDistanceFit> m_tip_result;
+  double m_current_tip_distance = 0.0;
+  double m_calculated_tip_distance = 0.0;
+  double m_screen_width_cm = 0.0;
+  double m_screen_height_cm = 0.0;
   QString m_message;
   QString m_device_error;
+  QString m_tilt_warning;
   QProcess m_installer;
   std::unique_ptr<QSocketNotifier> m_stylus_notifier;
   int m_stylus_fd = -1;
   int m_raw_x = 0;
   int m_raw_y = 0;
+  int m_raw_tilt_x = 0;
+  int m_raw_tilt_y = 0;
   int m_x_min = 0;
   int m_x_max = 1;
   int m_y_min = 0;
@@ -595,7 +922,7 @@ int main(int argc, char *argv[])
 {
   QApplication application(argc, argv);
   QCoreApplication::setApplicationName(QStringLiteral("surface-pen-calibrate"));
-  QCoreApplication::setApplicationVersion(QStringLiteral("0.2.0"));
+  QCoreApplication::setApplicationVersion(QStringLiteral("0.3.0"));
 
   QCommandLineParser parser;
   parser.setApplicationDescription(
@@ -606,9 +933,15 @@ int main(int argc, char *argv[])
     QStringLiteral("allow-mouse"),
     QObject::tr("開発時のテスト用にマウスクリックを受け付けます。"));
   parser.addOption(allow_mouse);
+  QCommandLineOption tip_distance(
+    QStringLiteral("tip-distance"),
+    QObject::tr("ペン傾斜からIPTSDのTipDistanceを測定します。"));
+  parser.addOption(tip_distance);
   parser.process(application);
 
-  CalibrationWindow window(parser.isSet(allow_mouse));
+  CalibrationWindow window(
+    parser.isSet(tip_distance) ? Mode::TipDistance : Mode::Position,
+    parser.isSet(allow_mouse));
   window.showFullScreen();
   window.activateWindow();
   window.setFocus();

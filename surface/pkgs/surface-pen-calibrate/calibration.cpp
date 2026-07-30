@@ -132,4 +132,81 @@ FitResult fit_affine(const std::span<const Point> measured,
   };
 }
 
+TipDistanceFit
+fit_tip_distance(const std::span<const TipSample> samples,
+                 const Point expected)
+{
+  if (samples.size() < 3) {
+    throw std::invalid_argument(
+      "At least three tilted samples are required");
+  }
+
+  Point mean_error {};
+  Point mean_correction {};
+  for (const TipSample &sample : samples) {
+    mean_error.x += expected.x - sample.measured.x;
+    mean_error.y += expected.y - sample.measured.y;
+    mean_correction.x += sample.correction_per_cm.x;
+    mean_correction.y += sample.correction_per_cm.y;
+  }
+
+  const double count = static_cast<double>(samples.size());
+  mean_error.x /= count;
+  mean_error.y /= count;
+  mean_correction.x /= count;
+  mean_correction.y /= count;
+
+  double numerator = 0.0;
+  double denominator = 0.0;
+  for (const TipSample &sample : samples) {
+    const Point centered_error {
+      .x = expected.x - sample.measured.x - mean_error.x,
+      .y = expected.y - sample.measured.y - mean_error.y,
+    };
+    const Point centered_correction {
+      .x = sample.correction_per_cm.x - mean_correction.x,
+      .y = sample.correction_per_cm.y - mean_correction.y,
+    };
+    numerator +=
+      (centered_error.x * centered_correction.x) +
+      (centered_error.y * centered_correction.y);
+    denominator +=
+      (centered_correction.x * centered_correction.x) +
+      (centered_correction.y * centered_correction.y);
+  }
+
+  if (denominator < 1e-12) {
+    throw std::runtime_error(
+      "Tilt samples do not contain enough directional variation");
+  }
+
+  const double distance = numerator / denominator;
+  const Point constant_error {
+    .x = mean_error.x - (mean_correction.x * distance),
+    .y = mean_error.y - (mean_correction.y * distance),
+  };
+
+  double squared_error = 0.0;
+  for (const TipSample &sample : samples) {
+    const Point corrected {
+      .x = sample.measured.x +
+           (sample.correction_per_cm.x * distance) +
+           constant_error.x,
+      .y = sample.measured.y +
+           (sample.correction_per_cm.y * distance) +
+           constant_error.y,
+    };
+    const double error =
+      std::hypot(corrected.x - expected.x,
+                 corrected.y - expected.y);
+    squared_error += error * error;
+  }
+
+  return {
+    .distance = distance,
+    .constant_error = constant_error,
+    .rms_error = std::sqrt(squared_error / count),
+  };
+}
+
 } // namespace calibration

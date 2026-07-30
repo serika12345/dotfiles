@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Surface Pen Tip Distance Measurement
+Name[ja]=Surface Pen 傾斜補正値の測定
+Comment=Measure IPTSD TipDistance from tilted pen taps
+Comment[ja]=傾けたSurface PenからIPTSDのTipDistanceを算出します
+Exec=surface-pen-calibrate --tip-distance
+Icon=input-tablet
+Terminal=false
+Categories=Settings;HardwareSettings;

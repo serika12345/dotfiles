@@ -95,6 +95,73 @@ void test_singular_points()
   }
 }
 
+void test_tip_distance()
+{
+  constexpr calibration::Point target {0.5, 0.5};
+  constexpr double wanted_distance = 0.62;
+  constexpr calibration::Point constant_error {0.004, -0.003};
+  constexpr std::array corrections {
+    calibration::Point {-0.03, 0.00},
+    calibration::Point {0.03, 0.00},
+    calibration::Point {0.00, -0.04},
+    calibration::Point {0.00, 0.04},
+    calibration::Point {-0.02, -0.03},
+    calibration::Point {0.02, 0.03},
+  };
+
+  std::array<calibration::TipSample, corrections.size()> samples {};
+  for (std::size_t index = 0; index < corrections.size(); ++index) {
+    samples[index] = {
+      .measured = {
+        .x = target.x -
+             (corrections[index].x * wanted_distance) -
+             constant_error.x,
+        .y = target.y -
+             (corrections[index].y * wanted_distance) -
+             constant_error.y,
+      },
+      .correction_per_cm = corrections[index],
+    };
+  }
+
+  const calibration::TipDistanceFit fitted =
+    calibration::fit_tip_distance(samples, target);
+  expect_near(fitted.distance, wanted_distance);
+  expect_near(fitted.constant_error.x, constant_error.x);
+  expect_near(fitted.constant_error.y, constant_error.y);
+  expect_near(fitted.rms_error, 0.0);
+}
+
+void test_tip_distance_needs_directional_variation()
+{
+  constexpr std::array samples {
+    calibration::TipSample {
+      .measured = {0.4, 0.5},
+      .correction_per_cm = {0.01, 0.0},
+    },
+    calibration::TipSample {
+      .measured = {0.5, 0.5},
+      .correction_per_cm = {0.01, 0.0},
+    },
+    calibration::TipSample {
+      .measured = {0.6, 0.5},
+      .correction_per_cm = {0.01, 0.0},
+    },
+  };
+
+  bool threw = false;
+  try {
+    static_cast<void>(
+      calibration::fit_tip_distance(samples, {0.5, 0.5}));
+  } catch (const std::runtime_error &) {
+    threw = true;
+  }
+  if (!threw) {
+    throw std::runtime_error(
+      "Samples without tilt variation were accepted");
+  }
+}
+
 } // namespace
 
 int main()
@@ -102,4 +169,6 @@ int main()
   test_fit();
   test_composition();
   test_singular_points();
+  test_tip_distance();
+  test_tip_distance_needs_directional_variation();
 }
