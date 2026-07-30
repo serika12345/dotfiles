@@ -45,6 +45,8 @@ let
     "$kwriteconfig" --file "$kritarc" --group "<default>" \
       --key showBrushHud --type bool true
     "$kwriteconfig" --file "$kritarc" --group "<default>" \
+      --key touchPainting --type int 2
+    "$kwriteconfig" --file "$kritarc" --group "<default>" \
       --key KineticScrollingEnabled --type bool true
     "$kwriteconfig" --file "$kritarc" --group "<default>" \
       --key KineticScrollingGesture --type int 1
