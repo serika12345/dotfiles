@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Surface Pen Calibration
+Name[ja]=Surface Pen キャリブレーション
+Comment=Calibrate the Surface Pen position
+Comment[ja]=Surface Penの座標を補正します
+Exec=surface-pen-calibrate
+Icon=input-tablet
+Terminal=false
+Categories=Settings;HardwareSettings;

@@ -94,6 +94,7 @@ in
     ./hardware-configuration.nix
     ./desktop.nix
     ./krita.nix
+    ./pen-calibration.nix
     ./rclone.nix
     ./staged-suspend.nix
   ];

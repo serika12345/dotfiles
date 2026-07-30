@@ -60,6 +60,34 @@ TouchUpのナビゲーションバーはGNOMEのタッチモードで表示さ�
 [upstream Issue #218](https://github.com/linux-surface/iptsd/issues/218)
 で報告しています。
 
+## Surface Penのキャリブレーション
+
+IPTSDの`iptsd-calibrate`は指の接触サイズと縦横比を測定するツールであり、ペン座標は
+補正しません。この構成では専用の`surface-pen-calibrate`をインストールします。
+アプリ一覧から「Surface Pen キャリブレーション」を開き、画面を通常の横向きにして、
+表示される9個のターゲットをSurface Penで順番にタップしてください。
+GNOME 50のタブレット入力経路では2回目以降のペンイベントがQtへ配送されない場合が
+あるため、測定中はIPTSDの仮想スタイラスから座標とペン先の接触を直接読み取ります。
+対象デバイスだけにudevの`uaccess`を設定し、ログイン中のユーザーへ読み取り権限を
+付与します。キーボードやタッチスクリーンへのアクセス権限は追加しません。
+
+測定が終わると、アプリは表示座標からlibinput用の6要素アフィン変換行列を算出します。
+画面をもう一度タップするか`Enter`を押すとPolkitの管理者認証が開き、行列を
+`/var/lib/surface-pen-calibration/matrix`へ保存してIPTSDを再起動します。IPTSDが
+仮想スタイラスを作り直す際、udevルールが`LIBINPUT_CALIBRATION_MATRIX`として行列を
+渡すため、GNOMEだけでなくKritaなどすべてのlibinput利用アプリへ補正が適用されます。
+
+操作キーは次の通りです。
+
+- `Backspace`: 直前の測定点を取り消す
+- `R`: 最初から測定し直す
+- `D`: 保存済みの補正を削除して単位行列へ戻す
+- `Esc`: 終了
+
+直近に算出した行列の控えは
+`~/.config/surface-pen-calibration/last-matrix`にも保存されます。永続的な実データは
+`/var/lib`に置かれるため、NixOSの再構築後も維持されます。
+
 ## Proton Drive
 
 この構成ではrcloneのProton Drive backendを使います。認証情報はNixでは管理せず、
