@@ -135,6 +135,7 @@ in
       iptsd = prev.iptsd.overrideAttrs (oldAttrs: {
         patches = (oldAttrs.patches or [ ]) ++ [
           ./patches/iptsd-stylus-release-delay.patch
+          ./patches/iptsd-eraser-full-pressure.patch
         ];
       });
     })

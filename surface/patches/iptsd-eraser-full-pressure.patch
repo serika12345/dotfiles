@@ -1,0 +1,14 @@
+diff --git a/src/apps/daemon/stylus.hpp b/src/apps/daemon/stylus.hpp
+--- a/src/apps/daemon/stylus.hpp
++++ b/src/apps/daemon/stylus.hpp
+@@ -88,7 +88,9 @@ public:
+ 
+ 			const i32 x = casts::to<i32>(std::round(data.x * MAX_X));
+ 			const i32 y = casts::to<i32>(std::round(data.y * MAX_Y));
+-			const i32 pressure = casts::to<i32>(std::round(data.pressure * MAX_P));
++			const i32 pressure = data.rubber && data.contact
++						     ? MAX_P
++						     : casts::to<i32>(std::round(data.pressure * MAX_P));
+ 
+ 			m_uinput->emit(EV_KEY, BTN_TOUCH, data.contact ? 1 : 0);
+ 			m_uinput->emit(EV_KEY, BTN_TOOL_PEN, !data.rubber ? 1 : 0);
