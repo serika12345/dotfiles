@@ -26,10 +26,36 @@ index 8bb5e0e..d9d95a3 100644
      case CLUTTER_KEYBOARD_DEVICE:
      case CLUTTER_PAD_DEVICE:
 diff --git a/src/backends/meta-sprite.c b/src/backends/meta-sprite.c
-index d8264ca..ca4f0b3 100644
+index d8264ca..39dcce6 100644
 --- a/src/backends/meta-sprite.c
 +++ b/src/backends/meta-sprite.c
-@@ -117,6 +117,10 @@ meta_sprite_update_cursor (ClutterSprite *sprite,
+@@ -96,14 +96,22 @@ meta_sprite_update_cursor (ClutterSprite *sprite,
+   MetaSpritePrivate *priv = meta_sprite_get_instance_private (meta_sprite);
+   MetaCursorRenderer *cursor_renderer;
+ 
+-  if (!clutter_focus_get_current_actor (CLUTTER_FOCUS (sprite)))
+-    return;
+-
+   cursor_renderer = meta_backend_get_cursor_renderer_for_sprite (priv->backend,
+                                                                  sprite);
+   if (!cursor_renderer)
+     return;
+ 
++  /*
++   * A touch event may clear the pointer sprite focus before the backend
++   * updates pointer visibility.  Do not leave the last cursor image on
++   * screen when that happens.
++   */
++  if (!clutter_focus_get_current_actor (CLUTTER_FOCUS (sprite)))
++    {
++      meta_cursor_renderer_set_cursor (cursor_renderer, NULL);
++      return;
++    }
++
+   if (clutter_sprite_get_role (sprite) == CLUTTER_SPRITE_ROLE_POINTER)
+     {
+       MetaCursorTracker *cursor_tracker =
+@@ -117,6 +125,10 @@ meta_sprite_update_cursor (ClutterSprite *sprite,
                                         pointer_visible ? cursor : NULL);
        meta_cursor_tracker_set_current_cursor (cursor_tracker, cursor);
      }
