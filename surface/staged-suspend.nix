@@ -8,17 +8,17 @@ let
   stateDir = "/run/staged-suspend";
   lockFile = "/run/staged-suspend.lock";
   desktopUser = "masato";
-  desktopUid = 1000;
   protonDriveMount = "/home/${desktopUser}/ProtonDrive";
   rcloneUnit = "rclone-protondrive.service";
   userManager = "${desktopUser}@.host";
-  displayWakeNotification = "/run/user/${toString desktopUid}/staged-suspend-display-woke";
+  displayWakeNotification = "${stateDir}/display-woke";
 
   stagedSuspendDisplayControl = pkgs.writeShellApplication {
     name = "staged-suspend-display-control";
     runtimeInputs = [
       pkgs.coreutils
       pkgs.systemd
+      pkgs.util-linux
     ];
     text = ''
       display_service=org.gnome.Mutter.DisplayConfig
@@ -26,11 +26,76 @@ let
       display_interface=org.gnome.Mutter.DisplayConfig
       wake_notification=${displayWakeNotification}
 
+      find_local_graphical_session() {
+        local active class name remote seat session type uid
+
+        while read -r session _; do
+          if ! active="$(
+            loginctl show-session "$session" --property=Active --value 2>/dev/null
+          )"; then
+            continue
+          fi
+          [ "$active" = yes ] || continue
+
+          remote="$(
+            loginctl show-session "$session" --property=Remote --value
+          )"
+          [ "$remote" = no ] || continue
+
+          seat="$(
+            loginctl show-session "$session" --property=Seat --value
+          )"
+          [ "$seat" = seat0 ] || continue
+
+          type="$(
+            loginctl show-session "$session" --property=Type --value
+          )"
+          case "$type" in
+            wayland | x11) ;;
+            *) continue ;;
+          esac
+
+          class="$(
+            loginctl show-session "$session" --property=Class --value
+          )"
+          case "$class" in
+            user | greeter) ;;
+            *) continue ;;
+          esac
+
+          name="$(
+            loginctl show-session "$session" --property=Name --value
+          )"
+          uid="$(
+            loginctl show-session "$session" --property=User --value
+          )"
+          if [ -n "$name" ] && [ -n "$uid" ]; then
+            printf '%s %s\n' "$name" "$uid"
+            return 0
+          fi
+        done < <(loginctl list-sessions --no-legend)
+
+        echo "No active local graphical session found" >&2
+        return 1
+      }
+
+      user_busctl() {
+        local name target uid
+
+        target="$(find_local_graphical_session)"
+        read -r name uid <<<"$target"
+        runuser --user "$name" -- \
+          env \
+            XDG_RUNTIME_DIR="/run/user/$uid" \
+            DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+            busctl --user "$@"
+      }
+
       get_power_save_mode() {
         local property
 
         property="$(
-          busctl --user get-property \
+          user_busctl get-property \
             "$display_service" \
             "$display_path" \
             "$display_interface" \
@@ -40,7 +105,7 @@ let
       }
 
       set_power_save_mode() {
-        busctl --user set-property \
+        user_busctl set-property \
           "$display_service" \
           "$display_path" \
           "$display_interface" \
@@ -52,7 +117,12 @@ let
 
         rm -f "$wake_notification"
         while true; do
-          mode="$(get_power_save_mode)"
+          if ! mode="$(get_power_save_mode)"; then
+            # GDM hands seat0 to the user's GNOME session during login. Retry
+            # across that short interval instead of losing wake detection.
+            sleep 0.1
+            continue
+          fi
           if [ "$mode" = 0 ]; then
             touch "$wake_notification"
             exit 0
@@ -385,12 +455,7 @@ in
   systemd.services.staged-suspend-display-wake = {
     description = "Blank the display and watch for a GNOME wake event";
     serviceConfig = {
-      User = desktopUser;
       Type = "simple";
-      Environment = [
-        "XDG_RUNTIME_DIR=/run/user/${toString desktopUid}"
-        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${toString desktopUid}/bus"
-      ];
       ExecStartPre = "${stagedSuspendDisplayControl}/bin/staged-suspend-display-control off";
       ExecStart = "${stagedSuspendDisplayControl}/bin/staged-suspend-display-control watch";
     };
@@ -399,12 +464,7 @@ in
   systemd.services.staged-suspend-display-on = {
     description = "Wake the display without changing its brightness";
     serviceConfig = {
-      User = desktopUser;
       Type = "oneshot";
-      Environment = [
-        "XDG_RUNTIME_DIR=/run/user/${toString desktopUid}"
-        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${toString desktopUid}/bus"
-      ];
       ExecStart = "${stagedSuspendDisplayControl}/bin/staged-suspend-display-control on";
     };
   };
