@@ -241,6 +241,7 @@
     "fujitsu-scansnap-home"
     "krita"
     "kde-connect"
+    "altserver"
   ];
 
   # App Store apps
