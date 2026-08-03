@@ -70,6 +70,18 @@
     "flakes"
   ];
 
+  # Fail closed: every build is sandboxed unless its derivation explicitly
+  # declares an administrator-approved host dependency below.
+  nix.settings.sandbox = true;
+  nix.settings.sandbox-fallback = false;
+
+  # Krita's iPadOS target derivations use the exact local Xcode toolchain as
+  # their only non-store input. Keep it off sandbox-paths so only derivations
+  # that explicitly declare __impureHostDeps can see it.
+  nix.settings.extra-allowed-impure-host-deps = [
+    "/Applications/Xcode.app"
+  ];
+
   # Set Git commit hash for darwin-version.
   system.configurationRevision = self.rev or self.dirtyRev or null;
 
