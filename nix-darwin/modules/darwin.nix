@@ -254,6 +254,7 @@
     "krita"
     "kde-connect"
     "altserver"
+    "wacom-tablet"
   ];
 
   # App Store apps
