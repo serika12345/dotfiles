@@ -17,6 +17,41 @@
         else
           prev.xjadeo;
       proton-drive-cli = final.callPackage "${self}/pkgs/proton-drive-cli/package.nix" { };
+      mocktab = final.stdenvNoCC.mkDerivation (finalAttrs: {
+        pname = "mocktab";
+        version = "0.4.0";
+
+        src = final.fetchurl {
+          url = "https://github.com/Cyzor/tablet-driver/releases/download/v${finalAttrs.version}/MockTab-${finalAttrs.version}.dmg";
+          hash = "sha256-qVNbNQ73lPqM48TMrwf3nTDHKVaehQLkkNnkJt8x7Ro=";
+        };
+
+        # The release image uses APFS, which nixpkgs' undmg cannot unpack.
+        # Preserve symlinks and omit macOS xattr pseudo-files so the notarized
+        # application bundle remains byte-for-byte signed.
+        nativeBuildInputs = [ final._7zz ];
+        sourceRoot = ".";
+        unpackCmd = "7zz x -snld -xr'!*:com.apple.*' $curSrc";
+
+        installPhase = ''
+          runHook preInstall
+
+          mkdir -p "$out/Applications"
+          cp -R MockTab.app "$out/Applications/"
+
+          runHook postInstall
+        '';
+
+        dontFixup = true;
+
+        meta = {
+          description = "Open-source macOS driver for unsupported Wacom tablets";
+          homepage = "https://mocktab.org/";
+          license = lib.licenses.gpl3Plus;
+          platforms = lib.platforms.darwin;
+          sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
+        };
+      });
       ghidra =
         if prev.stdenv.hostPlatform.isDarwin then
           final.symlinkJoin {
@@ -62,6 +97,7 @@
     furnace
     ghidra
     proton-drive-cli
+    mocktab
   ];
 
   # Necessary for using flakes on this system.
@@ -254,7 +290,6 @@
     "krita"
     "kde-connect"
     "altserver"
-    "wacom-tablet"
   ];
 
   # App Store apps
