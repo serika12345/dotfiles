@@ -98,6 +98,15 @@ in
         identityAgent = bitwardenSshAgentSocket;
       };
 
+      # Reuse the Bitwarden SSH Agent's existing NixOS key. On the cache
+      # account, sshd limits this same key to the cache store protocol.
+      "nixos-cache" = {
+        hostname = "nixos.local";
+        user = "macos-nix-cache";
+        forwardAgent = false;
+        identityAgent = bitwardenSshAgentSocket;
+      };
+
       "surface" = {
         hostname = "surface.local";
         user = "masato";
