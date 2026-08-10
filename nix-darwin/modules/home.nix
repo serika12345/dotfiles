@@ -16,6 +16,67 @@ let
       --exclude "Dropbox" \
       "$HOME"
   '';
+
+  nixProjectSleep = pkgs.writeShellScriptBin "nix-project-sleep" ''
+    set -euo pipefail
+
+    usage() {
+      printf '%s\n' \
+        'Usage: nix-project-sleep [--dry-run] PROJECT...' \
+        'Remove nix-direnv flake-profile GC roots for inactive projects, then run Nix GC.' \
+        'Leave each project directory and stop its development processes before running this.'
+    }
+
+    dry_run=0
+    case "''${1:-}" in
+      --dry-run)
+        dry_run=1
+        shift
+        ;;
+      --help|-h)
+        usage
+        exit 0
+        ;;
+    esac
+
+    if [ "$#" -eq 0 ]; then
+      usage >&2
+      exit 2
+    fi
+
+    project_dirs=()
+    for input_dir in "$@"; do
+      if [ ! -d "$input_dir" ]; then
+        printf 'nix-project-sleep: not a directory: %s\n' "$input_dir" >&2
+        exit 2
+      fi
+      project_dirs+=("$(cd "$input_dir" && pwd -P)")
+    done
+
+    for project_dir in "''${project_dirs[@]}"; do
+      direnv_dir="$project_dir/.direnv"
+      if [ ! -d "$direnv_dir" ]; then
+        printf 'nix-project-sleep: no .direnv directory: %s\n' "$project_dir" >&2
+        continue
+      fi
+
+      if [ "$dry_run" -eq 1 ]; then
+        printf 'Would remove nix-direnv roots in %s:\n' "$project_dir"
+        ${pkgs.findutils}/bin/find "$direnv_dir" -maxdepth 1 -type l \
+          \( -name 'flake-profile' -o -name 'flake-profile-*-link' \) -print
+      else
+        printf 'Removing nix-direnv roots in %s:\n' "$project_dir"
+        ${pkgs.findutils}/bin/find "$direnv_dir" -maxdepth 1 -type l \
+          \( -name 'flake-profile' -o -name 'flake-profile-*-link' \) -print -delete
+      fi
+    done
+
+    if [ "$dry_run" -eq 1 ]; then
+      exec ${pkgs.nix}/bin/nix-collect-garbage --dry-run
+    else
+      exec ${pkgs.nix}/bin/nix-collect-garbage
+    fi
+  '';
 in
 
 {
@@ -25,6 +86,7 @@ in
     stateVersion = "23.11";
     packages = [
       scanHome
+      nixProjectSleep
     ];
   };
 
