@@ -90,6 +90,8 @@ in
     ];
   };
 
+  home.file.".codex/AGENTS.md".source = ../../codex/AGENTS.md;
+
   launchd.agents.colima = {
     enable = true;
     config = {

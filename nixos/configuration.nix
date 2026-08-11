@@ -265,6 +265,8 @@ in
       home.packages = [
         scanHome
       ];
+
+      home.file.".codex/AGENTS.md".source = ../codex/AGENTS.md;
     };
 
   # Install firefox.

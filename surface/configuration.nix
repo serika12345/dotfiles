@@ -268,6 +268,8 @@ in
       enable = true;
       nix-direnv.enable = true;
     };
+
+    home.file.".codex/AGENTS.md".source = ../codex/AGENTS.md;
   };
 
   programs.firefox.enable = true;
