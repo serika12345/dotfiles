@@ -26,11 +26,12 @@
     enableUserSlices = true;
   };
 
-  # A 16 GiB machine cannot safely sustain multiple large builds at once.
-  # Limit both derivation-level and build-system-level parallelism.
+  # Use all eight logical CPUs for a large derivation and allow two
+  # independent derivations to overlap while the memory limits below contain
+  # unusually memory-intensive builds.
   nix.settings = {
-    max-jobs = 1;
-    cores = 4;
+    max-jobs = 2;
+    cores = 8;
   };
 
   # Slow builds down under pressure, then contain an OOM within Nix while
