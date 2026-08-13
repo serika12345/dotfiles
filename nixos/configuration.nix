@@ -26,6 +26,7 @@ in
   imports = [
     ./hardware-configuration.nix
     ./macos-nix-cache.nix
+    ./memory-pressure.nix
     desktopModule
   ];
 
