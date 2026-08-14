@@ -80,16 +80,17 @@ resources:
     source: "winget"
 
 - name: gitGlobalIdentity
-  type: Microsoft.DSC/PowerShell
+  type: Microsoft.Windows/WindowsPowerShell
   metadata:
     description: "Git のグローバル識別情報と Windows OpenSSH の利用を設定"
+  dependsOn:
+    - "[resourceId('Microsoft.WinGet/Package', 'wingetGitGit')]"
+    - "[resourceId('Microsoft.WinGet/Package', 'wingetBitwardenBitwarden')]"
   properties:
     resources:
-      - name: git_user_name
+      - name: gitUserName
         type: PSDscResources/Script
         properties:
-          DependsOn:
-            - "[Microsoft.WinGet/Package]wingetGitGit"
           GetScript: |
             $value = git config --global --get user.name 2>$null
             return @{ Result = $value }
@@ -100,11 +101,9 @@ resources:
           SetScript: |
             git config --global user.name "serika12345"
 
-      - name: git_user_email
+      - name: gitUserEmail
         type: PSDscResources/Script
         properties:
-          DependsOn:
-            - "[Microsoft.WinGet/Package]wingetGitGit"
           GetScript: |
             $value = git config --global --get user.email 2>$null
             return @{ Result = $value }
@@ -115,12 +114,9 @@ resources:
           SetScript: |
             git config --global user.email "281916063+serika12345@users.noreply.github.com"
 
-      - name: git_windows_openssh
+      - name: gitWindowsOpenSSH
         type: PSDscResources/Script
         properties:
-          DependsOn:
-            - "[Microsoft.WinGet/Package]wingetGitGit"
-            - "[Microsoft.WinGet/Package]wingetBitwardenBitwarden"
           GetScript: |
             $sshCommand = git config --global --get core.sshCommand 2>$null
             $sshKeygen = git config --global --get gpg.ssh.program 2>$null
@@ -139,18 +135,18 @@ resources:
             git config --global gpg.ssh.program "C:/Windows/System32/OpenSSH/ssh-keygen.exe"
 
 - name: windowsOpenSSH
-  type: Microsoft.DSC/PowerShell
+  type: Microsoft.Windows/WindowsPowerShell
   metadata:
     description: "OpenSSH Server、公開鍵認証、Bitwarden SSH Agent を設定"
     winget:
       securityContext: elevated
+  dependsOn:
+    - "[resourceId('Microsoft.WinGet/Package', 'wingetMicrosoftPowerShell')]"
   properties:
     resources:
-      - name: openssh_server
+      - name: openSSHServer
         type: PSDscResources/Script
         properties:
-          DependsOn:
-            - "[Microsoft.WinGet/Package]wingetMicrosoftPowerShell"
           GetScript: |
             $server = Get-WindowsCapability -Online -Name "OpenSSH.Server~~~~0.0.1.0"
             $client = Get-WindowsCapability -Online -Name "OpenSSH.Client~~~~0.0.1.0"
