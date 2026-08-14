@@ -7,7 +7,7 @@ metadata:
       identifier: "dscv3"
 
 resources:
-- name: winget_Git.Git
+- name: wingetGitGit
   type: Microsoft.WinGet/Package
   metadata:
     description: "Git.Git のインストール"
@@ -15,7 +15,7 @@ resources:
     id: "Git.Git"
     source: "winget"
 
-- name: winget_Mozilla.Firefox
+- name: wingetMozillaFirefox
   type: Microsoft.WinGet/Package
   metadata:
     description: "Mozilla.Firefox のインストール"
@@ -23,7 +23,7 @@ resources:
     id: "Mozilla.Firefox"
     source: "winget"
 
-- name: winget_Microsoft.PowerShell
+- name: wingetMicrosoftPowerShell
   type: Microsoft.WinGet/Package
   metadata:
     description: "Microsoft.PowerShell のインストール"
@@ -31,7 +31,7 @@ resources:
     id: "Microsoft.PowerShell"
     source: "winget"
 
-- name: winget_GitHub.cli
+- name: wingetGitHubCli
   type: Microsoft.WinGet/Package
   metadata:
     description: "GitHub.cli のインストール"
@@ -39,7 +39,7 @@ resources:
     id: "GitHub.cli"
     source: "winget"
 
-- name: winget_Microsoft.VisualStudioCode
+- name: wingetMicrosoftVisualStudioCode
   type: Microsoft.WinGet/Package
   metadata:
     description: "Microsoft.VisualStudioCode のインストール"
@@ -47,7 +47,7 @@ resources:
     id: "Microsoft.VisualStudioCode"
     source: "winget"
 
-- name: winget_Canonical.Ubuntu
+- name: wingetCanonicalUbuntu
   type: Microsoft.WinGet/Package
   metadata:
     description: "Canonical.Ubuntu のインストール"
@@ -55,7 +55,7 @@ resources:
     id: "Canonical.Ubuntu"
     source: "winget"
 
-- name: winget_Microsoft.WindowsTerminal
+- name: wingetMicrosoftWindowsTerminal
   type: Microsoft.WinGet/Package
   metadata:
     description: "Microsoft.WindowsTerminal のインストール"
@@ -63,7 +63,7 @@ resources:
     id: "Microsoft.WindowsTerminal"
     source: "winget"
 
-- name: winget_Microsoft.WSL
+- name: wingetMicrosoftWSL
   type: Microsoft.WinGet/Package
   metadata:
     description: "Microsoft.WSL のインストール"
@@ -71,17 +71,25 @@ resources:
     id: "Microsoft.WSL"
     source: "winget"
 
-- name: git_global_identity
+- name: wingetBitwardenBitwarden
+  type: Microsoft.WinGet/Package
+  metadata:
+    description: "Bitwarden.Bitwarden のインストール"
+  properties:
+    id: "Bitwarden.Bitwarden"
+    source: "winget"
+
+- name: gitGlobalIdentity
   type: Microsoft.DSC/PowerShell
   metadata:
-    description: "Git のグローバル user.name / user.email を設定"
+    description: "Git のグローバル識別情報と Windows OpenSSH の利用を設定"
   properties:
     resources:
       - name: git_user_name
         type: PSDscResources/Script
         properties:
           DependsOn:
-            - "[Microsoft.WinGet/Package]winget_Git.Git"
+            - "[Microsoft.WinGet/Package]wingetGitGit"
           GetScript: |
             $value = git config --global --get user.name 2>$null
             return @{ Result = $value }
@@ -96,7 +104,7 @@ resources:
         type: PSDscResources/Script
         properties:
           DependsOn:
-            - "[Microsoft.WinGet/Package]winget_Git.Git"
+            - "[Microsoft.WinGet/Package]wingetGitGit"
           GetScript: |
             $value = git config --global --get user.email 2>$null
             return @{ Result = $value }
@@ -106,3 +114,248 @@ resources:
             return $current -eq $expected
           SetScript: |
             git config --global user.email "281916063+serika12345@users.noreply.github.com"
+
+      - name: git_windows_openssh
+        type: PSDscResources/Script
+        properties:
+          DependsOn:
+            - "[Microsoft.WinGet/Package]wingetGitGit"
+            - "[Microsoft.WinGet/Package]wingetBitwardenBitwarden"
+          GetScript: |
+            $sshCommand = git config --global --get core.sshCommand 2>$null
+            $sshKeygen = git config --global --get gpg.ssh.program 2>$null
+            return @{ Result = "core.sshCommand=$sshCommand; gpg.ssh.program=$sshKeygen" }
+          TestScript: |
+            $expectedSshCommand = "C:/Windows/System32/OpenSSH/ssh.exe"
+            $expectedSshKeygen = "C:/Windows/System32/OpenSSH/ssh-keygen.exe"
+            $sshCommand = git config --global --get core.sshCommand 2>$null
+            $sshKeygen = git config --global --get gpg.ssh.program 2>$null
+            return (
+              $sshCommand -eq $expectedSshCommand -and
+              $sshKeygen -eq $expectedSshKeygen
+            )
+          SetScript: |
+            git config --global core.sshCommand "C:/Windows/System32/OpenSSH/ssh.exe"
+            git config --global gpg.ssh.program "C:/Windows/System32/OpenSSH/ssh-keygen.exe"
+
+- name: windowsOpenSSH
+  type: Microsoft.DSC/PowerShell
+  metadata:
+    description: "OpenSSH Server、公開鍵認証、Bitwarden SSH Agent を設定"
+    winget:
+      securityContext: elevated
+  properties:
+    resources:
+      - name: openssh_server
+        type: PSDscResources/Script
+        properties:
+          DependsOn:
+            - "[Microsoft.WinGet/Package]wingetMicrosoftPowerShell"
+          GetScript: |
+            $server = Get-WindowsCapability -Online -Name "OpenSSH.Server~~~~0.0.1.0"
+            $client = Get-WindowsCapability -Online -Name "OpenSSH.Client~~~~0.0.1.0"
+            $sshd = Get-CimInstance Win32_Service -Filter "Name='sshd'" -ErrorAction SilentlyContinue
+            $agent = Get-CimInstance Win32_Service -Filter "Name='ssh-agent'" -ErrorAction SilentlyContinue
+            return @{
+              Result = (
+                "Server={0}; Client={1}; sshd={2}/{3}; ssh-agent={4}/{5}" -f
+                $server.State,
+                $client.State,
+                $sshd.State,
+                $sshd.StartMode,
+                $agent.State,
+                $agent.StartMode
+              )
+            }
+          TestScript: |
+            $publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJauOxj4XI7YW2AQde7bvW+a7J9hSXRbe6nWTtKSFXs4"
+            $sshUser = $env:USERNAME.ToLowerInvariant()
+            $configPath = Join-Path $env:ProgramData "ssh\sshd_config"
+            $authorizedKeysPath = Join-Path $env:ProgramData "ssh\administrators_authorized_keys"
+            $powerShellPath = Join-Path $env:ProgramFiles "PowerShell\7\pwsh.exe"
+            $expectedConfig = @"
+            Port 22
+            PubkeyAuthentication yes
+            AuthenticationMethods publickey
+            PasswordAuthentication no
+            KbdInteractiveAuthentication no
+            PermitEmptyPasswords no
+            AllowUsers $sshUser
+            AllowAgentForwarding yes
+            AuthorizedKeysFile __PROGRAMDATA__/ssh/administrators_authorized_keys
+            Subsystem sftp sftp-server.exe
+            "@
+
+            $server = Get-WindowsCapability -Online -Name "OpenSSH.Server~~~~0.0.1.0"
+            $client = Get-WindowsCapability -Online -Name "OpenSSH.Client~~~~0.0.1.0"
+            if ($server.State -ne "Installed" -or $client.State -ne "Installed") {
+              return $false
+            }
+
+            $sshd = Get-CimInstance Win32_Service -Filter "Name='sshd'" -ErrorAction SilentlyContinue
+            $agent = Get-CimInstance Win32_Service -Filter "Name='ssh-agent'" -ErrorAction SilentlyContinue
+            if (
+              $null -eq $sshd -or
+              $sshd.State -ne "Running" -or
+              $sshd.StartMode -ne "Auto" -or
+              $null -eq $agent -or
+              $agent.State -ne "Stopped" -or
+              $agent.StartMode -ne "Disabled"
+            ) {
+              return $false
+            }
+
+            $firewallRule = Get-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -ErrorAction SilentlyContinue
+            if (
+              $null -eq $firewallRule -or
+              $firewallRule.Enabled -ne "True" -or
+              $firewallRule.Direction -ne "Inbound" -or
+              $firewallRule.Action -ne "Allow" -or
+              $firewallRule.Profile -notmatch "Private"
+            ) {
+              return $false
+            }
+            $portFilter = $firewallRule | Get-NetFirewallPortFilter
+            if ($portFilter.Protocol -ne "TCP" -or $portFilter.LocalPort -ne "22") {
+              return $false
+            }
+
+            if (-not (Test-Path -LiteralPath $configPath)) {
+              return $false
+            }
+            $currentConfig = (Get-Content -LiteralPath $configPath -Raw).Replace("`r`n", "`n").Trim()
+            if ($currentConfig -ne $expectedConfig.Replace("`r`n", "`n").Trim()) {
+              return $false
+            }
+
+            if (-not (Test-Path -LiteralPath $authorizedKeysPath)) {
+              return $false
+            }
+            $currentKeys = (Get-Content -LiteralPath $authorizedKeysPath -Raw).Trim()
+            if ($currentKeys -ne $publicKey) {
+              return $false
+            }
+
+            $acl = Get-Acl -LiteralPath $authorizedKeysPath
+            if (-not $acl.AreAccessRulesProtected) {
+              return $false
+            }
+            $expectedSids = @("S-1-5-18", "S-1-5-32-544")
+            $actualSids = @()
+            foreach ($rule in $acl.Access) {
+              $sid = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value
+              if (
+                $rule.AccessControlType -ne "Allow" -or
+                ($rule.FileSystemRights -band [System.Security.AccessControl.FileSystemRights]::FullControl) -ne
+                  [System.Security.AccessControl.FileSystemRights]::FullControl -or
+                $sid -notin $expectedSids
+              ) {
+                return $false
+              }
+              $actualSids += $sid
+            }
+            foreach ($sid in $expectedSids) {
+              if ($sid -notin $actualSids) {
+                return $false
+              }
+            }
+
+            $defaultShell = Get-ItemPropertyValue -LiteralPath "HKLM:\SOFTWARE\OpenSSH" -Name "DefaultShell" -ErrorAction SilentlyContinue
+            return $defaultShell -eq $powerShellPath
+          SetScript: |
+            $publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJauOxj4XI7YW2AQde7bvW+a7J9hSXRbe6nWTtKSFXs4"
+            $sshUser = $env:USERNAME.ToLowerInvariant()
+            $sshDirectory = Join-Path $env:ProgramData "ssh"
+            $configPath = Join-Path $sshDirectory "sshd_config"
+            $authorizedKeysPath = Join-Path $sshDirectory "administrators_authorized_keys"
+            $sshdPath = Join-Path $env:SystemRoot "System32\OpenSSH\sshd.exe"
+            $sshKeygenPath = Join-Path $env:SystemRoot "System32\OpenSSH\ssh-keygen.exe"
+            $powerShellPath = Join-Path $env:ProgramFiles "PowerShell\7\pwsh.exe"
+            $config = @"
+            Port 22
+            PubkeyAuthentication yes
+            AuthenticationMethods publickey
+            PasswordAuthentication no
+            KbdInteractiveAuthentication no
+            PermitEmptyPasswords no
+            AllowUsers $sshUser
+            AllowAgentForwarding yes
+            AuthorizedKeysFile __PROGRAMDATA__/ssh/administrators_authorized_keys
+            Subsystem sftp sftp-server.exe
+            "@
+
+            foreach ($capability in @(
+              "OpenSSH.Client~~~~0.0.1.0",
+              "OpenSSH.Server~~~~0.0.1.0"
+            )) {
+              $state = Get-WindowsCapability -Online -Name $capability
+              if ($state.State -ne "Installed") {
+                $result = Add-WindowsCapability -Online -Name $capability
+                if ($result.RestartNeeded) {
+                  Write-Warning "$capability の有効化を完了するには Windows の再起動が必要です。"
+                }
+              }
+            }
+
+            New-Item -ItemType Directory -Path $sshDirectory -Force | Out-Null
+            & $sshKeygenPath -A
+            if ($LASTEXITCODE -ne 0) {
+              throw "OpenSSH のホスト鍵を生成できませんでした。"
+            }
+
+            $temporaryConfig = Join-Path $sshDirectory "sshd_config.dsc.tmp"
+            Set-Content -LiteralPath $temporaryConfig -Value $config -Encoding ascii
+            & $sshdPath -t -f $temporaryConfig
+            if ($LASTEXITCODE -ne 0) {
+              Remove-Item -LiteralPath $temporaryConfig -Force -ErrorAction SilentlyContinue
+              throw "生成した sshd_config の検証に失敗しました。"
+            }
+            Move-Item -LiteralPath $temporaryConfig -Destination $configPath -Force
+
+            Set-Content -LiteralPath $authorizedKeysPath -Value $publicKey -Encoding ascii
+            $acl = [System.Security.AccessControl.FileSecurity]::new()
+            $acl.SetAccessRuleProtection($true, $false)
+            $administratorsSid = [System.Security.Principal.SecurityIdentifier]::new("S-1-5-32-544")
+            $systemSid = [System.Security.Principal.SecurityIdentifier]::new("S-1-5-18")
+            $acl.SetOwner($administratorsSid)
+            foreach ($sid in @($administratorsSid, $systemSid)) {
+              $rule = [System.Security.AccessControl.FileSystemAccessRule]::new(
+                $sid,
+                [System.Security.AccessControl.FileSystemRights]::FullControl,
+                [System.Security.AccessControl.AccessControlType]::Allow
+              )
+              $acl.AddAccessRule($rule)
+            }
+            Set-Acl -LiteralPath $authorizedKeysPath -AclObject $acl
+
+            $firewallRule = Get-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -ErrorAction SilentlyContinue
+            if ($null -eq $firewallRule) {
+              $firewallParameters = @{
+                Name = "OpenSSH-Server-In-TCP"
+                DisplayName = "OpenSSH Server (sshd)"
+                Enabled = "True"
+                Direction = "Inbound"
+                Protocol = "TCP"
+                Action = "Allow"
+                LocalPort = 22
+                Profile = "Private"
+              }
+              New-NetFirewallRule @firewallParameters | Out-Null
+            } else {
+              Set-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -Enabled True -Direction Inbound -Action Allow -Profile Private | Out-Null
+              $firewallRule | Get-NetFirewallPortFilter | Set-NetFirewallPortFilter -Protocol TCP -LocalPort 22 | Out-Null
+            }
+
+            if (-not (Test-Path -LiteralPath "HKLM:\SOFTWARE\OpenSSH")) {
+              New-Item -Path "HKLM:\SOFTWARE\OpenSSH" -Force | Out-Null
+            }
+            if (-not (Test-Path -LiteralPath $powerShellPath)) {
+              throw "OpenSSH の既定シェルに使用する PowerShell 7 が見つかりません。"
+            }
+            Set-ItemProperty -LiteralPath "HKLM:\SOFTWARE\OpenSSH" -Name "DefaultShell" -Type String -Value $powerShellPath
+
+            Set-Service -Name "sshd" -StartupType Automatic
+            Restart-Service -Name "sshd" -Force
+
+            Stop-Service -Name "ssh-agent" -Force -ErrorAction SilentlyContinue
+            Set-Service -Name "ssh-agent" -StartupType Disabled
