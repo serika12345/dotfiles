@@ -80,90 +80,63 @@ resources:
     source: "winget"
 
 - name: gitGlobalIdentity
-  type: Microsoft.Windows/WindowsPowerShell
+  type: Microsoft.DSC.Transitional/WindowsPowerShellScript
   metadata:
     description: "Git のグローバル識別情報と Windows OpenSSH の利用を設定"
   dependsOn:
-    - "[resourceId('Microsoft.WinGet/Package', 'wingetGitGit')]"
-    - "[resourceId('Microsoft.WinGet/Package', 'wingetBitwardenBitwarden')]"
+    - wingetGitGit
+    - wingetBitwardenBitwarden
   properties:
-    resources:
-      - name: gitUserName
-        type: PSDscResources/Script
-        properties:
-          GetScript: |
-            $value = git config --global --get user.name 2>$null
-            return @{ Result = $value }
-          TestScript: |
-            $expected = "serika12345"
-            $current = git config --global --get user.name 2>$null
-            return $current -eq $expected
-          SetScript: |
-            git config --global user.name "serika12345"
-
-      - name: gitUserEmail
-        type: PSDscResources/Script
-        properties:
-          GetScript: |
-            $value = git config --global --get user.email 2>$null
-            return @{ Result = $value }
-          TestScript: |
-            $expected = "281916063+serika12345@users.noreply.github.com"
-            $current = git config --global --get user.email 2>$null
-            return $current -eq $expected
-          SetScript: |
-            git config --global user.email "281916063+serika12345@users.noreply.github.com"
-
-      - name: gitWindowsOpenSSH
-        type: PSDscResources/Script
-        properties:
-          GetScript: |
-            $sshCommand = git config --global --get core.sshCommand 2>$null
-            $sshKeygen = git config --global --get gpg.ssh.program 2>$null
-            return @{ Result = "core.sshCommand=$sshCommand; gpg.ssh.program=$sshKeygen" }
-          TestScript: |
-            $expectedSshCommand = "C:/Windows/System32/OpenSSH/ssh.exe"
-            $expectedSshKeygen = "C:/Windows/System32/OpenSSH/ssh-keygen.exe"
-            $sshCommand = git config --global --get core.sshCommand 2>$null
-            $sshKeygen = git config --global --get gpg.ssh.program 2>$null
-            return (
-              $sshCommand -eq $expectedSshCommand -and
-              $sshKeygen -eq $expectedSshKeygen
-            )
-          SetScript: |
-            git config --global core.sshCommand "C:/Windows/System32/OpenSSH/ssh.exe"
-            git config --global gpg.ssh.program "C:/Windows/System32/OpenSSH/ssh-keygen.exe"
+    getScript: |
+      [ordered]@{
+        userName = git config --global --get user.name 2>$null
+        userEmail = git config --global --get user.email 2>$null
+        sshCommand = git config --global --get core.sshCommand 2>$null
+        sshKeygen = git config --global --get gpg.ssh.program 2>$null
+      } | ConvertTo-Json -Compress
+    testScript: |
+      $userName = git config --global --get user.name 2>$null
+      $userEmail = git config --global --get user.email 2>$null
+      $sshCommand = git config --global --get core.sshCommand 2>$null
+      $sshKeygen = git config --global --get gpg.ssh.program 2>$null
+      if (
+        $userName -eq "serika12345" -and
+        $userEmail -eq "281916063+serika12345@users.noreply.github.com" -and
+        $sshCommand -eq "C:/Windows/System32/OpenSSH/ssh.exe" -and
+        $sshKeygen -eq "C:/Windows/System32/OpenSSH/ssh-keygen.exe"
+      ) {
+        exit 0
+      }
+      exit 1
+    setScript: |
+      git config --global user.name "serika12345"
+      git config --global user.email "281916063+serika12345@users.noreply.github.com"
+      git config --global core.sshCommand "C:/Windows/System32/OpenSSH/ssh.exe"
+      git config --global gpg.ssh.program "C:/Windows/System32/OpenSSH/ssh-keygen.exe"
 
 - name: windowsOpenSSH
-  type: Microsoft.Windows/WindowsPowerShell
+  type: Microsoft.DSC.Transitional/WindowsPowerShellScript
   metadata:
     description: "OpenSSH Server、公開鍵認証、Bitwarden SSH Agent を設定"
     winget:
       securityContext: elevated
   dependsOn:
-    - "[resourceId('Microsoft.WinGet/Package', 'wingetMicrosoftPowerShell')]"
+    - wingetMicrosoftPowerShell
   properties:
-    resources:
-      - name: openSSHServer
-        type: PSDscResources/Script
-        properties:
-          GetScript: |
-            $server = Get-WindowsCapability -Online -Name "OpenSSH.Server~~~~0.0.1.0"
-            $client = Get-WindowsCapability -Online -Name "OpenSSH.Client~~~~0.0.1.0"
-            $sshd = Get-CimInstance Win32_Service -Filter "Name='sshd'" -ErrorAction SilentlyContinue
-            $agent = Get-CimInstance Win32_Service -Filter "Name='ssh-agent'" -ErrorAction SilentlyContinue
-            return @{
-              Result = (
-                "Server={0}; Client={1}; sshd={2}/{3}; ssh-agent={4}/{5}" -f
-                $server.State,
-                $client.State,
-                $sshd.State,
-                $sshd.StartMode,
-                $agent.State,
-                $agent.StartMode
-              )
-            }
-          TestScript: |
+    getScript: |
+      $server = Get-WindowsCapability -Online -Name "OpenSSH.Server~~~~0.0.1.0"
+      $client = Get-WindowsCapability -Online -Name "OpenSSH.Client~~~~0.0.1.0"
+      $sshd = Get-CimInstance Win32_Service -Filter "Name='sshd'" -ErrorAction SilentlyContinue
+      $agent = Get-CimInstance Win32_Service -Filter "Name='ssh-agent'" -ErrorAction SilentlyContinue
+      [ordered]@{
+        server = $server.State
+        client = $client.State
+        sshdState = $sshd.State
+        sshdStartMode = $sshd.StartMode
+        sshAgentState = $agent.State
+        sshAgentStartMode = $agent.StartMode
+      } | ConvertTo-Json -Compress
+    testScript: |
             $publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJauOxj4XI7YW2AQde7bvW+a7J9hSXRbe6nWTtKSFXs4"
             $sshUser = $env:USERNAME.ToLowerInvariant()
             $configPath = Join-Path $env:ProgramData "ssh\sshd_config"
@@ -185,7 +158,7 @@ resources:
             $server = Get-WindowsCapability -Online -Name "OpenSSH.Server~~~~0.0.1.0"
             $client = Get-WindowsCapability -Online -Name "OpenSSH.Client~~~~0.0.1.0"
             if ($server.State -ne "Installed" -or $client.State -ne "Installed") {
-              return $false
+              exit 1
             }
 
             $sshd = Get-CimInstance Win32_Service -Filter "Name='sshd'" -ErrorAction SilentlyContinue
@@ -198,7 +171,7 @@ resources:
               $agent.State -ne "Stopped" -or
               $agent.StartMode -ne "Disabled"
             ) {
-              return $false
+              exit 1
             }
 
             $firewallRule = Get-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -ErrorAction SilentlyContinue
@@ -209,32 +182,32 @@ resources:
               $firewallRule.Action -ne "Allow" -or
               $firewallRule.Profile -notmatch "Private"
             ) {
-              return $false
+              exit 1
             }
             $portFilter = $firewallRule | Get-NetFirewallPortFilter
             if ($portFilter.Protocol -ne "TCP" -or $portFilter.LocalPort -ne "22") {
-              return $false
+              exit 1
             }
 
             if (-not (Test-Path -LiteralPath $configPath)) {
-              return $false
+              exit 1
             }
             $currentConfig = (Get-Content -LiteralPath $configPath -Raw).Replace("`r`n", "`n").Trim()
             if ($currentConfig -ne $expectedConfig.Replace("`r`n", "`n").Trim()) {
-              return $false
+              exit 1
             }
 
             if (-not (Test-Path -LiteralPath $authorizedKeysPath)) {
-              return $false
+              exit 1
             }
             $currentKeys = (Get-Content -LiteralPath $authorizedKeysPath -Raw).Trim()
             if ($currentKeys -ne $publicKey) {
-              return $false
+              exit 1
             }
 
             $acl = Get-Acl -LiteralPath $authorizedKeysPath
             if (-not $acl.AreAccessRulesProtected) {
-              return $false
+              exit 1
             }
             $expectedSids = @("S-1-5-18", "S-1-5-32-544")
             $actualSids = @()
@@ -246,19 +219,22 @@ resources:
                   [System.Security.AccessControl.FileSystemRights]::FullControl -or
                 $sid -notin $expectedSids
               ) {
-                return $false
+                exit 1
               }
               $actualSids += $sid
             }
             foreach ($sid in $expectedSids) {
               if ($sid -notin $actualSids) {
-                return $false
+                exit 1
               }
             }
 
             $defaultShell = Get-ItemPropertyValue -LiteralPath "HKLM:\SOFTWARE\OpenSSH" -Name "DefaultShell" -ErrorAction SilentlyContinue
-            return $defaultShell -eq $powerShellPath
-          SetScript: |
+            if ($defaultShell -eq $powerShellPath) {
+              exit 0
+            }
+            exit 1
+    setScript: |
             $publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJauOxj4XI7YW2AQde7bvW+a7J9hSXRbe6nWTtKSFXs4"
             $sshUser = $env:USERNAME.ToLowerInvariant()
             $sshDirectory = Join-Path $env:ProgramData "ssh"
