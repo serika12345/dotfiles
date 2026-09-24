@@ -214,7 +214,10 @@ in
   # Enable Docker
   virtualisation.docker.enable = true;
   # Enable Android applications through Waydroid.
-  virtualisation.waydroid.enable = true;
+  virtualisation.waydroid = {
+    enable = true;
+    package = pkgs.waydroid-nftables;
+  };
   # Enable the NVIDIA Container Toolkit to allow Docker containers to use the GPU.
   hardware.nvidia-container-toolkit.enable = true;
 
