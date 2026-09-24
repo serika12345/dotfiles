@@ -113,18 +113,60 @@ resources:
         Rename-Computer -NewName $targetName -Force -ErrorAction Stop
       }
 
+      $pendingName = Get-ItemPropertyValue `
+        -LiteralPath "HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName" `
+        -Name "ComputerName"
+      if ($pendingName -ine $targetName) {
+        throw "コンピューター名の変更を再起動待ち状態へ登録できませんでした。"
+      }
+
       Write-Warning "コンピューター名を反映するには Windows の再起動が必要です。"
 
 - name: windowsOpenSSHCapabilities
-  type: Microsoft.Windows/FeatureOnDemandList
+  type: Microsoft.DSC.Transitional/WindowsPowerShellScript
   metadata:
     description: "Windows OpenSSH Client と Server のインストール"
   properties:
-    capabilities:
-      - identity: "OpenSSH.Client~~~~0.0.1.0"
-        state: Installed
-      - identity: "OpenSSH.Server~~~~0.0.1.0"
-        state: Installed
+    getScript: |
+      $capabilities = foreach ($name in @(
+        "OpenSSH.Client~~~~0.0.1.0"
+        "OpenSSH.Server~~~~0.0.1.0"
+      )) {
+        $capability = Get-WindowsCapability -Online -Name $name
+        [ordered]@{
+          identity = $capability.Name
+          state = [string]$capability.State
+        }
+      }
+      [ordered]@{
+        capabilities = @($capabilities)
+      } | ConvertTo-Json -Depth 3 -Compress
+    testScript: |
+      foreach ($name in @(
+        "OpenSSH.Client~~~~0.0.1.0"
+        "OpenSSH.Server~~~~0.0.1.0"
+      )) {
+        $capability = Get-WindowsCapability -Online -Name $name
+        if ($capability.State -ne "Installed") {
+          return $false
+        }
+      }
+      return $true
+    setScript: |
+      $restartNeeded = $false
+      foreach ($name in @(
+        "OpenSSH.Client~~~~0.0.1.0"
+        "OpenSSH.Server~~~~0.0.1.0"
+      )) {
+        $capability = Get-WindowsCapability -Online -Name $name
+        if ($capability.State -ne "Installed") {
+          $result = Add-WindowsCapability -Online -Name $name -ErrorAction Stop
+          $restartNeeded = $restartNeeded -or $result.RestartNeeded
+        }
+      }
+      if ($restartNeeded) {
+        Write-Warning "OpenSSH のインストールを完了するには Windows の再起動が必要です。"
+      }
 
 - name: gitGlobalIdentity
   type: Microsoft.DSC.Transitional/WindowsPowerShellScript
