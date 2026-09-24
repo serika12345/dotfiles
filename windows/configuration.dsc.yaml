@@ -79,6 +79,42 @@ resources:
     id: "Bitwarden.Bitwarden"
     source: "winget"
 
+- name: windowsComputerName
+  type: Microsoft.DSC.Transitional/WindowsPowerShellScript
+  metadata:
+    description: "Windows のコンピューター名を surface に設定"
+  properties:
+    getScript: |
+      $targetName = "surface"
+      $activeName = (Get-CimInstance Win32_ComputerSystem).Name
+      $pendingName = Get-ItemPropertyValue `
+        -LiteralPath "HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName" `
+        -Name "ComputerName"
+      [ordered]@{
+        activeName = $activeName
+        pendingName = $pendingName
+        rebootRequired = $activeName -ine $pendingName
+        inDesiredState = $activeName -ieq $targetName
+      } | ConvertTo-Json -Compress
+    testScript: |
+      $activeName = (Get-CimInstance Win32_ComputerSystem).Name
+      return ($activeName -ieq "surface")
+    setScript: |
+      $targetName = "surface"
+      $activeName = (Get-CimInstance Win32_ComputerSystem).Name
+      if ($activeName -ieq $targetName) {
+        return
+      }
+
+      $pendingName = Get-ItemPropertyValue `
+        -LiteralPath "HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName" `
+        -Name "ComputerName"
+      if ($pendingName -ine $targetName) {
+        Rename-Computer -NewName $targetName -Force -ErrorAction Stop
+      }
+
+      Write-Warning "コンピューター名を反映するには Windows の再起動が必要です。"
+
 - name: windowsOpenSSHCapabilities
   type: Microsoft.Windows/FeatureOnDemandList
   metadata:
