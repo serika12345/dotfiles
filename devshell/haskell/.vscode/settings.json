@@ -1,0 +1,29 @@
+{
+  "[cabal]": {
+    "editor.defaultFormatter": "haskell.haskell",
+    "editor.formatOnSave": true
+  },
+  "[haskell]": {
+    "editor.defaultFormatter": "haskell.haskell",
+    "editor.formatOnSave": true
+  },
+  "[nix]": {
+    "editor.defaultFormatter": "jnoortheen.nix-ide",
+    "editor.formatOnSave": true
+  },
+  "haskell.cabalFormattingProvider": "cabal-fmt",
+  "haskell.formattingProvider": "fourmolu",
+  "haskell.manageHLS": "PATH",
+  "nix.enableLanguageServer": true,
+  "nix.formatterPath": "nixfmt",
+  "nix.serverPath": "nil",
+  "nix.serverSettings": {
+    "nil": {
+      "formatting": {
+        "command": ["nixfmt"]
+      }
+    }
+  },
+  "nixEnvSelector.nixFile": "${workspaceFolder}/flake.nix",
+  "nixEnvSelector.useFlakes": true
+}
