@@ -379,7 +379,7 @@ in
     "mission-control-plus"
     "hhkb"
     "elgato-game-capture-hd"
-    "android-studio"
+    # "android-studio"
     "nx-studio"
     "chatgpt"
     "balenaetcher"
@@ -390,7 +390,7 @@ in
     "protonvpn"
     "raspberry-pi-imager"
     "fujitsu-scansnap-home"
-    "krita"
+    # "krita"
     "kde-connect"
     "altserver"
   ];
