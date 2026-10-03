@@ -216,7 +216,11 @@ in
   # Krita's iPadOS target derivations use the exact local Xcode toolchain as
   # their only non-store input. Keep it off sandbox-paths so only derivations
   # that explicitly declare __impureHostDeps can see it.
-  nix.settings.extra-allowed-impure-host-deps = [
+  nix.settings.allowed-impure-host-deps = [
+    "/System/Library"
+    "/bin/sh"
+    "/dev"
+    "/usr/lib"
     "/Applications/Xcode.app"
   ];
 
@@ -341,7 +345,10 @@ in
   homebrew.enable = true;
 
   homebrew.taps = [
-    "daipeihust/tap"
+    {
+      name = "daipeihust/tap";
+      trusted = true;
+    }
   ];
 
   homebrew.brews = [
@@ -349,17 +356,6 @@ in
     "daipeihust/tap/im-select"
     "firefoxpwa"
   ];
-
-  system.activationScripts.homebrew.text = lib.mkBefore ''
-    if [ -f "${config.homebrew.prefix}/bin/brew" ]; then
-      PATH="${config.homebrew.prefix}/bin:$PATH" \
-      sudo \
-        --preserve-env=PATH \
-        --user=${lib.escapeShellArg config.homebrew.user} \
-        --set-home \
-        brew trust --quiet --tap daipeihust/tap
-    fi
-  '';
 
   homebrew.casks = [
     "visual-studio-code"
@@ -400,7 +396,6 @@ in
     "LINE" = 539883307;
     "Bandwidth+" = 490461369;
     "SSTP Connect" = 1543667909;
-    "Xcode" = 497799835;
   };
 
   # Automatically update and upgrade Homebrew packages on activation.
