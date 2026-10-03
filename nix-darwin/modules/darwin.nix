@@ -181,7 +181,7 @@ in
     direnv
     nixfmt
     docker
-    colima
+    # colima
     tree
     xjadeo
     furnace

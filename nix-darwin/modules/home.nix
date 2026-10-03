@@ -92,22 +92,22 @@ in
 
   home.file.".codex/AGENTS.md".source = ../../codex/AGENTS.md;
 
-  launchd.agents.colima = {
-    enable = true;
-    config = {
-      ProgramArguments = [
-        "${pkgs.colima}/bin/colima"
-        "start"
-        "--foreground"
-      ];
-      RunAtLoad = true;
-      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/colima.out.log";
-      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/colima.err.log";
-      EnvironmentVariables = {
-        PATH = "${pkgs.colima}/bin:${pkgs.docker}/bin:/usr/local/bin:/usr/bin:/bin";
-      };
-    };
-  };
+  # launchd.agents.colima = {
+  #   enable = true;
+  #   config = {
+  #     ProgramArguments = [
+  #       "${pkgs.colima}/bin/colima"
+  #       "start"
+  #       "--foreground"
+  #     ];
+  #     RunAtLoad = true;
+  #     StandardOutPath = "${config.home.homeDirectory}/Library/Logs/colima.out.log";
+  #     StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/colima.err.log";
+  #     EnvironmentVariables = {
+  #       PATH = "${pkgs.colima}/bin:${pkgs.docker}/bin:/usr/local/bin:/usr/bin:/bin";
+  #     };
+  #   };
+  # };
 
   programs.zsh = {
     enable = true;
@@ -135,7 +135,7 @@ in
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
-    includes = [ "${config.home.homeDirectory}/.colima/ssh_config" ];
+    # includes = [ "${config.home.homeDirectory}/.colima/ssh_config" ];
     matchBlocks = {
       "*" = {
         forwardAgent = false;
