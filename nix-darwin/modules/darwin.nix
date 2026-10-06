@@ -354,6 +354,7 @@ in
     "bitwarden-cli"
     "daipeihust/tap/im-select"
     "firefoxpwa"
+    "opencode"
   ];
 
   homebrew.casks = [
