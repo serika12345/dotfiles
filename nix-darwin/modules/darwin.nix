@@ -366,7 +366,7 @@ in
     "linearmouse"
     "karabiner-elements"
     "adguard"
-    "affinity"
+    # "affinity"
     "google-japanese-ime"
     "hex-fiend"
     "onyx"
