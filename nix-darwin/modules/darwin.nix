@@ -389,6 +389,7 @@ in
     # "krita"
     "kde-connect"
     "altserver"
+    "deepseek-harness"
   ];
 
   # App Store apps
