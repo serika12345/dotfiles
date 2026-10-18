@@ -376,15 +376,15 @@ in
     "hhkb"
     "elgato-game-capture-hd"
     # "android-studio"
-    "nx-studio"
+    # "nx-studio"
     "chatgpt"
     "balenaetcher"
     "windows-app"
-    "wireshark-app"
+    # "wireshark-app"
     "thaw"
     "proton-drive"
     "protonvpn"
-    "raspberry-pi-imager"
+    # "raspberry-pi-imager"
     "fujitsu-scansnap-home"
     # "krita"
     "kde-connect"
@@ -394,7 +394,7 @@ in
 
   # App Store apps
   homebrew.masApps = {
-    "LINE" = 539883307;
+    # "LINE" = 539883307;
     "Bandwidth+" = 490461369;
     "SSTP Connect" = 1543667909;
   };
