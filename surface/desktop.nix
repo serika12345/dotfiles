@@ -8,16 +8,10 @@ let
   inherit (lib.gvariant) mkInt32 mkTuple mkUint32;
 in
 {
-  # TODO: Remove surface/patches/mutter-text-input-v1-osk.patch once nixpkgs
-  # ships Mutter 50.3 or later, which contains upstream MR !5117.
-  # Mutter 50.2 removed the implicit input-panel request used by version 1
-  # text-input clients when it added version 2 of the protocol. GTK 4.22 still
-  # binds version 1, so retain the old fallback until the upstream fix is used.
   nixpkgs.overlays = [
     (final: prev: {
       mutter = prev.mutter.overrideAttrs (oldAttrs: {
         patches = (oldAttrs.patches or [ ]) ++ [
-          ./patches/mutter-text-input-v1-osk.patch
           # Hide the mouse pointer as soon as touchscreen or stylus input is
           # used. Also suppress the separate tablet-tool cursor, since drawing
           # apps render their own brush outline.
