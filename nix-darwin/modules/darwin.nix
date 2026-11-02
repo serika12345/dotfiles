@@ -232,6 +232,9 @@ in
   };
   system.primaryUser = "masato";
 
+  # Use Touch ID to authenticate sudo.
+  security.pam.services.sudo_local.touchIdAuth = true;
+
   # Environment variables
   environment.variables = {
     SSH_AUTH_SOCK = "/Users/masato/.bitwarden-ssh-agent.sock";
