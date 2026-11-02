@@ -50,10 +50,10 @@ in
     nssmdns4 = true;
     openFirewall = true;
     wideArea = false;
-    publish = {
-      enable = true;
-      addresses = true;
-      workstation = true;
+    settings.publish = {
+      disable-publishing = false;
+      publish-addresses = true;
+      publish-workstation = true;
     };
   };
 

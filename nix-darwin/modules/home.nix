@@ -118,65 +118,65 @@ in
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
-    matchBlocks = {
+    settings = {
       "*" = {
-        forwardAgent = false;
-        addKeysToAgent = "no";
-        compression = false;
-        serverAliveInterval = 120;
-        serverAliveCountMax = 3;
-        hashKnownHosts = false;
-        userKnownHostsFile = "~/.ssh/known_hosts";
-        controlMaster = "no";
-        controlPath = "~/.ssh/master-%r@%n:%p";
-        controlPersist = "no";
-        extraOptions.GSSAPIAuthentication = "no";
+        ForwardAgent = false;
+        AddKeysToAgent = "no";
+        Compression = false;
+        ServerAliveInterval = 120;
+        ServerAliveCountMax = 3;
+        HashKnownHosts = false;
+        UserKnownHostsFile = "~/.ssh/known_hosts";
+        ControlMaster = "no";
+        ControlPath = "~/.ssh/master-%r@%n:%p";
+        ControlPersist = "no";
+        GSSAPIAuthentication = "no";
       };
 
       "github.com" = {
-        identityAgent = bitwardenSshAgentSocket;
+        IdentityAgent = bitwardenSshAgentSocket;
       };
 
       "nixos" = {
-        hostname = "nixos.local";
-        user = "masato";
-        forwardAgent = true;
-        identityAgent = bitwardenSshAgentSocket;
+        HostName = "nixos.local";
+        User = "masato";
+        ForwardAgent = true;
+        IdentityAgent = bitwardenSshAgentSocket;
       };
 
       # Reuse the Bitwarden SSH Agent's existing NixOS key. On the cache
       # account, sshd limits this same key to the cache store protocol.
       "nixos-cache" = {
-        hostname = "nixos.local";
-        user = "macos-nix-cache";
-        forwardAgent = false;
-        identityAgent = bitwardenSshAgentSocket;
+        HostName = "nixos.local";
+        User = "macos-nix-cache";
+        ForwardAgent = false;
+        IdentityAgent = bitwardenSshAgentSocket;
       };
 
       "surface" = {
-        hostname = "surface.local";
-        user = "masato";
-        forwardAgent = true;
-        identityAgent = bitwardenSshAgentSocket;
+        HostName = "surface.local";
+        User = "masato";
+        ForwardAgent = true;
+        IdentityAgent = bitwardenSshAgentSocket;
       };
 
       "surface.local" = {
-        user = "masato";
+        User = "masato";
       };
 
       "192.168.100.7" = { };
 
       "192.168.100.6" = {
-        user = "masato";
+        User = "masato";
       };
 
       "192.168.100.5" = {
-        user = "masato";
-        forwardAgent = true;
+        User = "masato";
+        ForwardAgent = true;
       };
 
       "192.168.100.1" = {
-        extraOptions.PreferredAuthentications = "password";
+        PreferredAuthentications = "password";
       };
     };
   };
