@@ -271,6 +271,7 @@ in
 
     home.file.".codex/AGENTS.md".source = ../codex/AGENTS.md;
     home.file.".claude/CLAUDE.md".source = ../codex/AGENTS.md;
+    home.file.".claude/settings.json".source = ../claude/settings.json;
   };
 
   programs.firefox.enable = true;
