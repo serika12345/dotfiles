@@ -269,6 +269,7 @@ in
       ];
 
       home.file.".codex/AGENTS.md".source = ../codex/AGENTS.md;
+      home.file.".claude/CLAUDE.md".source = ../codex/AGENTS.md;
     };
 
   # Install firefox.
