@@ -292,7 +292,7 @@ in
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    python315
+    python314
     uv
     nodejs_24
     vim
@@ -314,6 +314,7 @@ in
     nixfmt
     bitwarden-desktop
     codexPackage
+    opencode
     appimage-run
   ];
 
